@@ -27,13 +27,13 @@ const HRLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6">
       <Toaster position="top-right" />
       <div className="max-w-md w-full">
-        <div className="bg-white border-2 border-neutral-300 rounded-lg p-6">
+        <div className="bg-white border border-neutral-300 rounded-lg p-6 shadow-sm">
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-100 rounded-lg mb-3">
-              <Users className="text-primary-600" size={24} />
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-red-50 rounded-lg mb-3">
+              <Users className="text-red-600" size={24} />
             </div>
             <h2 className="text-xl font-bold text-neutral-900 mb-1">HR Portal Login</h2>
             <p className="text-sm text-neutral-600">Enter your credentials to continue</p>
@@ -58,14 +58,14 @@ const HRLogin = () => {
               required
             />
 
-            <div className="pt-3">
+            <div className="pt-2">
               <Button type="submit" variant="primary" className="w-full">
                 Login
               </Button>
             </div>
           </form>
 
-          <div className="mt-4 p-3 bg-neutral-50 border border-neutral-300 rounded">
+          <div className="mt-4 p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
             <p className="text-xs text-neutral-600 text-center">
               Demo Credentials:<br />
               <span className="font-medium">Username: admin</span><br />
@@ -76,7 +76,7 @@ const HRLogin = () => {
           <div className="mt-4 text-center">
             <button
               onClick={() => navigate('/')}
-              className="text-xs text-neutral-600 hover:text-neutral-900"
+              className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors"
             >
               ← Back to Home
             </button>

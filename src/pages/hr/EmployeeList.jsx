@@ -1,8 +1,6 @@
 import { useData } from '../../context/DataContext';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, Eye } from 'lucide-react';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
 import { useState, useEffect } from 'react';
 
 const EmployeeList = () => {
@@ -11,6 +9,8 @@ const EmployeeList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Auto-refresh every 3 seconds
   useEffect(() => {
@@ -20,6 +20,11 @@ const EmployeeList = () => {
 
     return () => clearInterval(interval);
   }, [refreshEmployees]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, stageFilter, actionFilter]);
 
   const filteredEmployees = employees
     .filter(emp => {
@@ -58,202 +63,151 @@ const EmployeeList = () => {
     })
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by newest first
 
-  const getStageColor = (stage) => {
-    const colors = {
-      'pre-arrival': 'bg-amber-100 text-amber-700',
-      'in-country': 'bg-blue-100 text-blue-700',
-      'finalization': 'bg-purple-100 text-purple-700',
-      'completed': 'bg-success-100 text-success-700',
-    };
-    return colors[stage] || 'bg-gray-100 text-gray-700';
-  };
+  // Pagination
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedEmployees = filteredEmployees.slice(startIndex, endIndex);
 
   return (
-    <div className="min-h-screen bg-grey">
-      <div className="max-w-[1400px] mx-auto p-4">
+    <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
+      <div className="flex-1 flex flex-col p-6 max-w-[1600px] mx-auto w-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3 bg-white border border-neutral-300 rounded p-3">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-base font-semibold text-neutral-800">All Employees</h1>
-            <p className="text-xs text-neutral-500">Manage all employee visa applications</p>
+            <h1 className="text-2xl font-semibold text-neutral-900">All Employees</h1>
+            <p className="text-sm text-neutral-600">Manage all employee visa applications</p>
+          </div>
+          <div className="text-sm text-neutral-600">
+            <span className="font-semibold text-neutral-900">{filteredEmployees.length}</span> of {employees.length} employees
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white border border-neutral-300 rounded overflow-hidden">
-          <div className="p-3 border-b border-neutral-300">
-            <div className="flex flex-wrap gap-3 items-center">
-              {/* Search Bar - Smaller */}
-              <div className="relative flex-1 min-w-[200px] max-w-[300px]">
-                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-neutral-400" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search employees..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
+        <div className="bg-white border border-neutral-300 rounded-lg mb-4">
+          <div className="p-3">
+            <div className="flex gap-3 items-center">
+              {/* Search Bar */}
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-neutral-400" size={14} />
+                <input type="text" placeholder="Search employees..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-8 pr-3 py-1.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-400" />
               </div>
 
               {/* Stage Filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-neutral-600 whitespace-nowrap">Stage:</label>
-                <select
-                  value={stageFilter}
-                  onChange={(e) => setStageFilter(e.target.value)}
-                  className="px-3 py-2 text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white"
-                >
-                  <option value="all">All Stages</option>
-                  <option value="pre-arrival">Pre Arrival</option>
-                  <option value="in-country">In Country</option>
-                  <option value="finalization">Finalization</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
+              <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="px-3 py-1.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-400 bg-white">
+                <option value="all">All Stages</option>
+                <option value="pre-arrival">Pre Arrival</option>
+                <option value="in-country">In Country</option>
+                <option value="finalization">Finalization</option>
+                <option value="completed">Completed</option>
+              </select>
 
               {/* Action Filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-neutral-600 whitespace-nowrap">Action:</label>
-                <select
-                  value={actionFilter}
-                  onChange={(e) => setActionFilter(e.target.value)}
-                  className="px-3 py-2 text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white"
-                >
-                  <option value="all">All Actions</option>
-                  <option value="needs-review">Needs Review</option>
-                  <option value="needs-diso">Needs DISO</option>
-                  <option value="needs-medical">Needs Medical</option>
-                  <option value="waiting-employee">Waiting Employee</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-
-              {/* Results Count */}
-              <div className="ml-auto text-xs text-neutral-500">
-                {filteredEmployees.length} of {employees.length} employees
-              </div>
+              <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className="px-3 py-1.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-400 bg-white">
+                <option value="all">All Actions</option>
+                <option value="needs-review">Needs Review</option>
+                <option value="needs-diso">Needs DISO</option>
+                <option value="needs-medical">Needs Medical</option>
+                <option value="waiting-employee">Waiting Employee</option>
+                <option value="completed">Completed</option>
+              </select>
             </div>
           </div>
+        </div>
 
+        {/* Employee Table */}
+        <div className="bg-white border border-neutral-300 rounded-lg flex flex-col overflow-hidden">
           {filteredEmployees.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="mx-auto text-neutral-400 mb-3" size={40} />
-              <p className="text-sm text-neutral-600">No employees found</p>
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+                <Users className="text-neutral-400" size={24} />
+              </div>
+              <p className="text-sm text-neutral-900 font-medium">No employees found</p>
+              <p className="text-xs text-neutral-600 mt-1">Try adjusting your filters</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="flex-1 overflow-auto">
               <table className="w-full">
-                <thead className="bg-neutral-100 border-b border-neutral-300">
+                <thead className="bg-neutral-50 sticky top-0">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Name</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Email</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Job Title</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Visa Type</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Stage</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Password</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide min-w-[180px]">Actions</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Name</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Email</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Job Title</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Visa Type</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Stage</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Password</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide min-w-[180px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-200">
-                  {filteredEmployees.map((employee) => (
+                  {paginatedEmployees.map((employee) => (
                     <tr key={employee.id} className="hover:bg-neutral-50">
-                      <td className="px-3 py-2.5">
-                        <button
-                          onClick={() => navigate(`/hr/employee/${employee.id}`)}
-                          className="text-sm font-medium text-gray-900 hover:text-gray-700 hover:underline"
-                        >
+                      <td className="px-4 py-2.5">
+                        <button onClick={() => navigate(`/hr/employee/${employee.id}`)} className="text-sm font-medium text-neutral-900 hover:text-neutral-700 hover:underline">
                           {employee.name}
                         </button>
                       </td>
-                      <td className="px-3 py-2.5 text-xs text-neutral-600">{employee.email}</td>
-                      <td className="px-3 py-2.5 text-xs text-neutral-600">{employee.jobTitle}</td>
-                      <td className="px-3 py-2.5 text-xs text-neutral-600">{employee.visaType}</td>
-                      <td className="px-3 py-2.5">
-                        <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${
-                          employee.currentStage === 'completed' 
-                            ? 'bg-success-600 text-white' 
-                            : employee.currentStage === 'in-country'
-                            ? 'bg-neutral-600 text-white'
-                            : 'bg-neutral-400 text-white'
-                        }`}>
-                          {employee.currentStage === 'pre-arrival' ? 'PRE ARRIVAL' : 
-                           employee.currentStage === 'in-country' ? 'IN COUNTRY' : 'COMPLETED'}
+                      <td className="px-4 py-2.5 text-xs text-neutral-600">{employee.email}</td>
+                      <td className="px-4 py-2.5 text-xs text-neutral-600">{employee.jobTitle}</td>
+                      <td className="px-4 py-2.5 text-xs text-neutral-600">{employee.visaType}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${employee.currentStage === 'completed' ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-700'}`}>
+                          {employee.currentStage === 'pre-arrival' ? 'Pre-Arrival' : employee.currentStage === 'in-country' ? 'In-Country' : 'Completed'}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5">
-                        <code className="px-2 py-0.5 bg-neutral-100 text-xs text-neutral-800 rounded border border-neutral-300">{employee.password}</code>
+                      <td className="px-4 py-2.5">
+                        <code className="px-2 py-0.5 bg-neutral-100 text-xs text-neutral-700 rounded border border-neutral-300">{employee.password}</code>
                       </td>
-                      <td className="px-3 py-2.5 min-w-[180px]">
+                      <td className="px-4 py-2.5 min-w-[180px]">
                         <div className="flex gap-1.5 flex-wrap items-center">
                           {/* Review Documents */}
                           {employee.preArrival?.documentsUploaded && !employee.preArrival?.hrReviewed && (
-                            <Button
-                              variant="primary"
-                              onClick={() => navigate(`/hr/review/${employee.id}`)}
-                              icon={Eye}
-                            >
+                            <button onClick={() => navigate(`/hr/review/${employee.id}`)} className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors flex items-center gap-1">
+                              <Eye className="w-3 h-3" />
                               Review
-                            </Button>
+                            </button>
                           )}
                           
                           {/* DISO Info */}
                           {employee.preArrival?.hrReviewed && !employee.preArrival?.disoInfoCompleted && (
-                            <Button
-                              variant="primary"
-                              onClick={() => navigate(`/hr/diso-info/${employee.id}`)}
-                            >
+                            <button onClick={() => navigate(`/hr/diso-info/${employee.id}`)} className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
                               DISO
-                            </Button>
+                            </button>
                           )}
                           
                           {/* Book Medical */}
                           {employee.inCountry?.arrivalUpdated && !employee.inCountry?.medicalAppointment?.status && (
-                            <Button
-                              variant="primary"
-                              onClick={() => navigate(`/hr/book-medical/${employee.id}`)}
-                            >
+                            <button onClick={() => navigate(`/hr/book-medical/${employee.id}`)} className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
                               Medical
-                            </Button>
+                            </button>
                           )}
                           
                           {/* Submit Visa */}
                           {employee.inCountry?.biometricConfirmed && !employee.inCountry?.residenceVisaSubmitted && (
-                            <Button
-                              variant="primary"
-                              onClick={() => navigate(`/hr/submit-visa/${employee.id}`)}
-                            >
+                            <button onClick={() => navigate(`/hr/submit-visa/${employee.id}`)} className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
                               Submit Visa
-                            </Button>
+                            </button>
                           )}
                           
                           {/* Initiate Contract */}
                           {employee.inCountry?.residenceVisaSubmitted && !employee.finalization?.contractInitiated && (
-                            <Button
-                              variant="primary"
-                              onClick={() => navigate(`/hr/initiate-contract/${employee.id}`)}
-                            >
+                            <button onClick={() => navigate(`/hr/initiate-contract/${employee.id}`)} className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
                               Contract
-                            </Button>
+                            </button>
                           )}
                           
                           {/* Submit to MOHRE */}
                           {employee.finalization?.contractSigned && !employee.finalization?.mohreSubmitted && (
-                            <Button
-                              variant="primary"
-                              onClick={() => navigate(`/hr/mohre-submission/${employee.id}`)}
-                            >
+                            <button onClick={() => navigate(`/hr/mohre-submission/${employee.id}`)} className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
                               MOHRE
-                            </Button>
+                            </button>
                           )}
                           
                           {/* Apply for Visa */}
                           {employee.finalization?.mohreApproved && !employee.finalization?.visaReceived && (
-                            <Button
-                              variant="primary"
-                              onClick={() => navigate(`/hr/visa-application/${employee.id}`)}
-                            >
+                            <button onClick={() => navigate(`/hr/visa-application/${employee.id}`)} className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
                               Apply Visa
-                            </Button>
+                            </button>
                           )}
                           
                           {/* Waiting states - Show only ONE status at a time */}
@@ -261,31 +215,31 @@ const EmployeeList = () => {
                           
                           {/* Completed */}
                           {employee.currentStage === 'completed' && employee.finalization?.stampedVisaUploaded ? (
-                            <span className="inline-block text-xs text-success-600 font-semibold whitespace-nowrap">✓ Completed</span>
+                            <span className="inline-block text-xs text-green-600 font-semibold whitespace-nowrap">✓ Completed</span>
                           ) : 
                           /* After visa received, waiting for stamped visa upload */
                           employee.finalization?.visaReceived && !employee.finalization?.stampedVisaUploaded ? (
-                            <span className="inline-block text-xs text-success-600 whitespace-nowrap">Waiting for stamped visa upload...</span>
+                            <span className="inline-block text-xs text-neutral-600 whitespace-nowrap">Waiting for stamped visa...</span>
                           ) : 
                           /* After MOHRE submitted, waiting for approval */
                           employee.finalization?.mohreSubmitted && !employee.finalization?.mohreApproved ? (
-                            <span className="inline-block text-xs text-purple-600 whitespace-nowrap">Waiting for MOHRE approval...</span>
+                            <span className="inline-block text-xs text-neutral-600 whitespace-nowrap">Waiting for MOHRE...</span>
                           ) : 
                           /* After contract initiated, waiting for signature */
                           employee.finalization?.contractInitiated && !employee.finalization?.contractSigned ? (
-                            <span className="inline-block text-xs text-amber-600 whitespace-nowrap">Waiting for contract signature...</span>
+                            <span className="inline-block text-xs text-neutral-600 whitespace-nowrap">Waiting for signature...</span>
                           ) : 
                           /* After medical uploaded, waiting for biometric */
                           employee.inCountry?.medicalCertificateUploaded && !employee.inCountry?.biometricConfirmed ? (
-                            <span className="inline-block text-xs text-blue-600 whitespace-nowrap">Waiting for biometric confirmation...</span>
+                            <span className="inline-block text-xs text-neutral-600 whitespace-nowrap">Waiting for biometric...</span>
                           ) : 
                           /* After medical booked, waiting for certificate */
                           employee.inCountry?.medicalAppointment?.status && !employee.inCountry?.medicalCertificateUploaded ? (
-                            <span className="inline-block text-xs text-blue-600 whitespace-nowrap">Waiting for medical certificate...</span>
+                            <span className="inline-block text-xs text-neutral-600 whitespace-nowrap">Waiting for medical...</span>
                           ) : 
                           /* After DISO completed, waiting for arrival */
                           employee.preArrival?.disoInfoCompleted && !employee.inCountry?.arrivalUpdated ? (
-                            <span className="inline-block text-xs text-blue-600 whitespace-nowrap">Waiting for arrival update...</span>
+                            <span className="inline-block text-xs text-neutral-600 whitespace-nowrap">Waiting for arrival...</span>
                           ) : 
                           /* Waiting for documents */
                           !employee.preArrival?.documentsUploaded ? (
@@ -297,6 +251,28 @@ const EmployeeList = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {filteredEmployees.length > itemsPerPage && (
+            <div className="border-t border-neutral-300 px-4 py-3 flex items-center justify-between">
+              <div className="text-xs text-neutral-600">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredEmployees.length)} of {filteredEmployees.length} employees
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="px-3 py-1 text-xs border border-neutral-300 rounded-lg hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button key={page} onClick={() => setCurrentPage(page)} className={`px-3 py-1 text-xs border rounded-lg transition-colors ${currentPage === page ? 'bg-red-600 text-white border-red-600' : 'border-neutral-300 hover:bg-neutral-50'}`}>
+                    {page}
+                  </button>
+                ))}
+                <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="px-3 py-1 text-xs border border-neutral-300 rounded-lg hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>

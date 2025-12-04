@@ -3,7 +3,7 @@ import {
   User, FileText, Calendar, CheckCircle, Clock, 
   Eye, Upload, Send, FileCheck, Plane, Stethoscope, 
   Fingerprint, FileSignature, Download, Mail, Phone,
-  Briefcase, MapPin, CreditCard, Check, Circle
+  IdCardLanyard, MapPin, CreditCard, Check, Circle
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import Card from '../../components/common/Card';
@@ -87,7 +87,7 @@ const EmployeeDetails = () => {
               <h1 className="text-4xl font-bold mb-2">{employee.name}</h1>
               <div className="flex items-center gap-4 text-primary-100">
                 <div className="flex items-center gap-2">
-                  <Briefcase size={18} />
+                  <IdCardLanyard size={18} />
                   <span>{employee.jobTitle}</span>
                 </div>
                 <div className="flex items-center gap-2">

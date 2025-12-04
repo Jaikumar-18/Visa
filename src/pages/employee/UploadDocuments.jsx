@@ -546,20 +546,22 @@ const UploadDocuments = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-grey">
-      <div className="max-w-[1200px] mx-auto p-4">
-        <div className="flex items-center justify-between mb-3 bg-white border border-neutral-300 rounded p-3">
-          <div>
-            <h1 className="text-base font-semibold text-neutral-800">Upload Documents</h1>
-            <p className="text-xs text-neutral-500">Upload supporting documents and fill basic information</p>
-          </div>
+    <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 max-w-[1400px] mx-auto w-full overflow-hidden">
+        {/* Header */}
+        <div className="mb-3">
+          <h1 className="text-2xl font-semibold text-neutral-900">Upload Documents</h1>
+          <p className="text-sm text-neutral-600">Upload supporting documents and fill basic information</p>
         </div>
 
-        <div className="bg-white border border-neutral-300 rounded px-6 mb-3">
+        {/* Workflow Stepper */}
+        <div className="bg-white border border-neutral-300 rounded-lg px-6 mb-3">
           <WorkflowStepper steps={workflowSteps} currentStep={1} />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        {/* Form - Scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-3 pb-3">
         {/* Step 1: Personal Information */}
         <Card title="Step 1: Personal Information" icon={FileText}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -634,9 +636,7 @@ const UploadDocuments = () => {
 
         {/* Step 2: Supporting Documents - Upload First */}
         <Card title="Step 2: Supporting Documents" icon={UploadIcon}>
-          
-          
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Passport Copy - Full Width */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start gap-3 mb-3">
@@ -662,7 +662,7 @@ const UploadDocuments = () => {
             </div>
 
             {/* Other Documents - Grid Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FileUpload
                 label="Passport Size Photo"
                 accept="image/*"
@@ -1016,15 +1016,17 @@ const UploadDocuments = () => {
 
 
 
-          <div className="flex gap-2 bg-white border border-neutral-300 rounded p-3">
-            <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary">
-              Submit Documents
-            </Button>
-          </div>
-        </form>
+            {/* Submit Buttons */}
+            <div className="bg-white border border-neutral-300 rounded-lg p-3 flex gap-2 sticky bottom-0">
+              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary">
+                Submit Documents
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

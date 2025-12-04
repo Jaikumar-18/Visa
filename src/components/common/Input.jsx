@@ -12,10 +12,10 @@ const Input = ({
   ...props 
 }) => {
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
+    <div className={`flex flex-col ${className}`}>
       {label && (
-        <label className={`text-sm font-medium text-gray-700 ${labelDir === 'rtl' ? 'text-right' : ''}`} dir={labelDir}>
-          {label} {required && <span className="text-primary-600">*</span>}
+        <label className={`text-xs font-medium text-neutral-700 mb-1 ${labelDir === 'rtl' ? 'text-right' : ''}`} dir={labelDir}>
+          {label} {required && <span className="text-red-600">*</span>}
         </label>
       )}
       <input
@@ -25,10 +25,10 @@ const Input = ({
         placeholder={placeholder}
         required={required}
         dir={dir}
-        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        className="px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
         {...props}
       />
-      {error && <span className="text-sm text-primary-600">{error}</span>}
+      {error && <span className="text-xs text-red-600">{error}</span>}
     </div>
   );
 };

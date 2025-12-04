@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { UserPlus, CheckCircle } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { VISA_TYPES, DEPARTMENTS, STAGES } from '../../utils/constants';
-import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import ProgressStepper from '../../components/common/ProgressStepper';
@@ -194,232 +193,235 @@ const CreateEmployee = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-grey">
-      <div className="max-w-[1200px] mx-auto p-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3 bg-white border border-neutral-300 rounded p-3">
-          <div>
-            <h1 className="text-base font-semibold text-neutral-800">Create Employee</h1>
-            <p className="text-xs text-neutral-500">Complete the following steps to create a new employee</p>
-          </div>
-        </div>
+    <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 max-w-[1600px] mx-auto w-full overflow-hidden">
 
         {/* Progress Stepper */}
-        <div className="bg-white border border-neutral-300 rounded px-6 mb-3">
+        <div className="bg-white border border-neutral-300 rounded-lg px-6 mb-3">
           <ProgressStepper steps={steps} currentStep={step} />
         </div>
 
-      {step === 1 && (
-        <Card title="Step 1: Terms and Conditions" icon={CheckCircle}>
-          <form onSubmit={handleTermsSubmit}>
-            <div className="bg-gray-50 rounded-lg p-6 mb-6 max-h-96 overflow-y-auto">
-              <h3 className="font-semibold text-gray-900 mb-4">Terms and Conditions</h3>
-              <div className="space-y-4 text-sm text-gray-700">
-                <p>
-                  By creating an employee account in the Visa Management Portal, you acknowledge and agree to the following terms:
-                </p>
-                <ol className="list-decimal list-inside space-y-2">
-                  <li>All information provided must be accurate and complete.</li>
-                  <li>The company will process visa applications in accordance with UAE immigration laws.</li>
-                  <li>Employee data will be handled securely and confidentially.</li>
-                  <li>The employee must provide all required documents within specified timeframes.</li>
-                  <li>The company reserves the right to cancel the application if false information is provided.</li>
-                  <li>Processing times may vary based on government procedures.</li>
-                  <li>The employee must comply with all UAE laws and regulations.</li>
-                  <li>Medical examinations and biometric submissions are mandatory.</li>
-                  <li>The employee must maintain valid travel documents throughout the process.</li>
-                  <li>Any changes to personal information must be reported immediately.</li>
-                </ol>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 mb-6">
-              <input
-                type="checkbox"
-                id="terms"
-                checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-              />
-              <label htmlFor="terms" className="text-sm text-gray-700">
-                I accept the terms and conditions on behalf of the company
-              </label>
-            </div>
-
-            <div className="flex gap-3">
-              <Button type="button" variant="secondary" onClick={() => navigate('/hr/dashboard')}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary">
-                Continue to Employee Details
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      {step === 2 && (
-        <Card title="Step 2: General Information" icon={UserPlus}>
-          <form onSubmit={handleFormSubmit} className="space-y-6">
-            {/* Personal Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Title <span className="text-primary-600">*</span>
-                  </label>
-                  <select name="title" value={formData.title} onChange={handleInputChange} required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">Select</option>
-                    <option value="Mr">Mr</option>
-                    <option value="Ms">Ms</option>
-                    <option value="Mrs">Mrs</option>
-                  </select>
+        {/* Content Area - Scrollable */}
+        <div className="bg-white rounded-lg border border-neutral-300 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto p-4">
+            {step === 1 && (
+              <form onSubmit={handleTermsSubmit} className="h-full flex flex-col">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle className="w-5 h-5 text-neutral-700" />
+                  <h2 className="text-base font-semibold text-neutral-900">Step 1: Terms and Conditions</h2>
                 </div>
-                <Input label="First Name (English)" name="firstName" value={formData.firstName} onChange={handleInputChange} required />
-                <Input label="الاسم الأول (Arabic)" name="firstNameArabic" value={formData.firstNameArabic} onChange={handleInputChange} dir="rtl" labelDir="rtl" />
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <Input label="Middle Name (English)" name="middleName" value={formData.middleName} onChange={handleInputChange} />
-                <Input label="الاسم الأوسط (Arabic)" name="middleNameArabic" value={formData.middleNameArabic} onChange={handleInputChange} dir="rtl" labelDir="rtl" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <Input label="Last Name (English)" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
-                <Input label="اسم العائلة (Arabic)" name="lastNameArabic" value={formData.lastNameArabic} onChange={handleInputChange} dir="rtl" labelDir="rtl" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Qualification <span className="text-primary-600">*</span>
-                  </label>
-                  <select name="qualification" value={formData.qualification} onChange={handleInputChange} required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">Select</option>
-                    <option value="Graduate">Graduate</option>
-                    <option value="Post Graduate">Post Graduate</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="High School">High School</option>
-                  </select>
+                <div className="bg-neutral-50 rounded-lg p-4 mb-4 overflow-y-auto border border-neutral-200">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">Terms and Conditions</h3>
+                  <div className="space-y-3 text-xs text-neutral-700 leading-relaxed">
+                    <p>
+                      By creating an employee account in the Visa Management Portal, you acknowledge and agree to the following terms:
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1.5 pl-2">
+                      <li>All information provided must be accurate and complete.</li>
+                      <li>The company will process visa applications in accordance with UAE immigration laws.</li>
+                      <li>Employee data will be handled securely and confidentially.</li>
+                      <li>The employee must provide all required documents within specified timeframes.</li>
+                      <li>The company reserves the right to cancel the application if false information is provided.</li>
+                      <li>Processing times may vary based on government procedures.</li>
+                      <li>The employee must comply with all UAE laws and regulations.</li>
+                      <li>Medical examinations and biometric submissions are mandatory.</li>
+                      <li>The employee must maintain valid travel documents throughout the process.</li>
+                      <li>Any changes to personal information must be reported immediately.</li>
+                    </ol>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Gender <span className="text-primary-600">*</span>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="w-4 h-4 text-red-600 border-neutral-300 rounded focus:ring-red-500"
+                  />
+                  <label htmlFor="terms" className="text-xs text-neutral-700">
+                    I accept the terms and conditions on behalf of the company
                   </label>
-                  <select name="gender" value={formData.gender} onChange={handleInputChange} required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">Select</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Marital Status <span className="text-primary-600">*</span>
-                  </label>
-                  <select name="maritalStatus" value={formData.maritalStatus} onChange={handleInputChange} required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">Select</option>
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Divorced">Divorced</option>
-                  </select>
+
+                <div className="flex gap-2">
+                  <Button type="button" variant="secondary" onClick={() => navigate('/hr/dashboard')}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    Continue to Employee Details
+                  </Button>
                 </div>
-              </div>
-            </div>
+              </form>
+            )}
 
-            {/* Contact Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required placeholder="employee@company.com" />
-                <Input label="Phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} required placeholder="+971 XX XXX XXXX" />
-              </div>
-            </div>
-
-            {/* Company Details */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Input
-                  label="Company Name"
-                  name="companyName"
-                  value={formData.companyName}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="e.g. ABC Technologies LLC"
-                />
-                <Input
-                  label="Establishment Card Number"
-                  name="establishmentCardNumber"
-                  value={formData.establishmentCardNumber}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="e.g. EST-123456"
-                />
-                <Input
-                  label="Labor Contract Number"
-                  name="laborContractNumber"
-                  value={formData.laborContractNumber}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="e.g. LC-2025-001"
-                />
-              </div>
-            </div>
-
-            {/* Employment Details */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Employment Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="Job Title" name="jobTitle" value={formData.jobTitle} onChange={handleInputChange} required placeholder="e.g. Software Engineer" />
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Department <span className="text-primary-600">*</span>
-                  </label>
-                  <select name="department" value={formData.department} onChange={handleInputChange} required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">Select Department</option>
-                    {DEPARTMENTS.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
+            {step === 2 && (
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserPlus className="w-5 h-5 text-neutral-700" />
+                  <h2 className="text-base font-semibold text-neutral-900">Step 2: General Information</h2>
                 </div>
-                <Input label="Salary (AED)" name="salary" type="number" value={formData.salary} onChange={handleInputChange} required placeholder="e.g. 15000" />
-                <Input label="Start Date" name="startDate" type="date" value={formData.startDate} onChange={handleInputChange} required />
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Visa Type <span className="text-primary-600">*</span>
-                  </label>
-                  <select name="visaType" value={formData.visaType} onChange={handleInputChange} required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">Select Visa Type</option>
-                    {VISA_TYPES.map(visa => (
-                      <option key={visa} value={visa}>{visa}</option>
-                    ))}
-                  </select>
+                {/* Personal Information */}
+                <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">Personal Information</h3>
+                  
+                  <div className="grid grid-cols-3 gap-3 mb-3">
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                        Title <span className="text-red-600">*</span>
+                      </label>
+                      <select name="title" value={formData.title} onChange={handleInputChange} required
+                        className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
+                        <option value="">Select</option>
+                        <option value="Mr">Mr</option>
+                        <option value="Ms">Ms</option>
+                        <option value="Mrs">Mrs</option>
+                      </select>
+                    </div>
+                    <Input label="First Name (English)" name="firstName" value={formData.firstName} onChange={handleInputChange} required />
+                    <Input label="الاسم الأول (Arabic)" name="firstNameArabic" value={formData.firstNameArabic} onChange={handleInputChange} dir="rtl" labelDir="rtl" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <Input label="Middle Name (English)" name="middleName" value={formData.middleName} onChange={handleInputChange} />
+                    <Input label="الاسم الأوسط (Arabic)" name="middleNameArabic" value={formData.middleNameArabic} onChange={handleInputChange} dir="rtl" labelDir="rtl" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <Input label="Last Name (English)" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
+                    <Input label="اسم العائلة (Arabic)" name="lastNameArabic" value={formData.lastNameArabic} onChange={handleInputChange} dir="rtl" labelDir="rtl" />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                        Qualification <span className="text-red-600">*</span>
+                      </label>
+                      <select name="qualification" value={formData.qualification} onChange={handleInputChange} required
+                        className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
+                        <option value="">Select</option>
+                        <option value="Graduate">Graduate</option>
+                        <option value="Post Graduate">Post Graduate</option>
+                        <option value="Diploma">Diploma</option>
+                        <option value="High School">High School</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                        Gender <span className="text-red-600">*</span>
+                      </label>
+                      <select name="gender" value={formData.gender} onChange={handleInputChange} required
+                        className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                        Marital Status <span className="text-red-600">*</span>
+                      </label>
+                      <select name="maritalStatus" value={formData.maritalStatus} onChange={handleInputChange} required
+                        className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
+                        <option value="">Select</option>
+                        <option value="Single">Single</option>
+                        <option value="Married">Married</option>
+                        <option value="Divorced">Divorced</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button type="button" variant="secondary" onClick={() => setStep(1)}>
-                Back
-              </Button>
-              <Button type="submit" variant="primary">
-                Create Employee & Send Notification
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
+                {/* Contact Information */}
+                <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">Contact Information</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required placeholder="employee@company.com" />
+                    <Input label="Phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} required placeholder="+971 XX XXX XXXX" />
+                  </div>
+                </div>
+
+                {/* Company Details */}
+                <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">Company Details</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input
+                      label="Company Name"
+                      name="companyName"
+                      value={formData.companyName}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g. ABC Technologies LLC"
+                    />
+                    <Input
+                      label="Establishment Card Number"
+                      name="establishmentCardNumber"
+                      value={formData.establishmentCardNumber}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g. EST-123456"
+                    />
+                    <Input
+                      label="Labor Contract Number"
+                      name="laborContractNumber"
+                      value={formData.laborContractNumber}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g. LC-2025-001"
+                    />
+                  </div>
+                </div>
+
+                {/* Employment Details */}
+                <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">Employment Details</h3>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <Input label="Job Title" name="jobTitle" value={formData.jobTitle} onChange={handleInputChange} required placeholder="e.g. Software Engineer" />
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                        Department <span className="text-red-600">*</span>
+                      </label>
+                      <select name="department" value={formData.department} onChange={handleInputChange} required
+                        className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
+                        <option value="">Select Department</option>
+                        {DEPARTMENTS.map(dept => (
+                          <option key={dept} value={dept}>{dept}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input label="Salary (AED)" name="salary" type="number" value={formData.salary} onChange={handleInputChange} required placeholder="e.g. 15000" />
+                    <Input label="Start Date" name="startDate" type="date" value={formData.startDate} onChange={handleInputChange} required />
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                      Visa Type <span className="text-red-600">*</span>
+                    </label>
+                    <select name="visaType" value={formData.visaType} onChange={handleInputChange} required
+                      className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
+                      <option value="">Select Visa Type</option>
+                      {VISA_TYPES.map(visa => (
+                        <option key={visa} value={visa}>{visa}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+                    Back
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    Create Employee & Send Notification
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

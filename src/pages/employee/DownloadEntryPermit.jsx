@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { Download, CheckCircle, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
-import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import toast from 'react-hot-toast';
 
@@ -34,50 +33,56 @@ const DownloadEntryPermit = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Entry Permit</h1>
-        <p className="text-gray-600 mt-1">Your entry permit is ready for download</p>
-      </div>
+    <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 max-w-[1400px] mx-auto w-full overflow-hidden">
+        {/* Header */}
+        <div className="mb-3">
+          <h1 className="text-2xl font-semibold text-neutral-900">Entry Permit</h1>
+          <p className="text-sm text-neutral-600">Your entry permit is ready for download</p>
+        </div>
 
-      <Card>
-        <div className="text-center py-8">
-          <div className="w-20 h-20 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="text-success-600" size={40} />
-          </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            Documents Approved!
-          </h2>
-          <p className="text-gray-600 mb-8">
-            Your documents have been reviewed and approved by HR. You can now download your entry permit.
-          </p>
-
-          <div className="bg-gray-50 rounded-lg p-6 mb-8">
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <FileText className="text-primary-600" size={48} />
-              <div className="text-left">
-                <p className="font-semibold text-gray-900">UAE Entry Permit</p>
-                <p className="text-sm text-gray-600">Valid for 60 days</p>
-                <p className="text-sm text-gray-600">Employee: {employee.name}</p>
+        {/* Content */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="bg-white rounded-lg border border-neutral-300 p-8 max-w-2xl w-full">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="text-green-600" size={32} />
               </div>
+              
+              <h2 className="text-xl font-bold text-neutral-900 mb-2">
+                Documents Approved!
+              </h2>
+              <p className="text-sm text-neutral-600 mb-6">
+                Your documents have been reviewed and approved by HR. You can now download your entry permit.
+              </p>
+
+              <div className="bg-neutral-50 rounded-lg p-4 mb-6 border border-neutral-200">
+                <div className="flex items-center justify-center gap-3">
+                  <FileText className="text-red-600" size={40} />
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-neutral-900">UAE Entry Permit</p>
+                    <p className="text-xs text-neutral-600">Valid for 60 days</p>
+                    <p className="text-xs text-neutral-600">Employee: {employee.name}</p>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant="primary"
+                onClick={handleDownload}
+                icon={Download}
+                className="px-8"
+              >
+                Download Entry Permit
+              </Button>
+
+              <p className="text-xs text-neutral-500 mt-3">
+                Please print this document and carry it with you when traveling to UAE
+              </p>
             </div>
           </div>
-
-          <Button
-            variant="primary"
-            onClick={handleDownload}
-            icon={Download}
-            className="px-8"
-          >
-            Download Entry Permit
-          </Button>
-
-          <p className="text-sm text-gray-500 mt-4">
-            Please print this document and carry it with you when traveling to UAE
-          </p>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

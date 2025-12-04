@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { Bell, CheckCircle, Info, AlertCircle, User, Trash2, Filter } from 'lucide-react';
-import Card from '../../components/common/Card';
 
 const HRNotifications = () => {
   const navigate = useNavigate();
@@ -51,13 +50,13 @@ const HRNotifications = () => {
   });
 
   return (
-    <div className="min-h-screen bg-grey">
-      <div className="max-w-[1000px] mx-auto p-4">
+    <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 max-w-[1400px] mx-auto w-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3 bg-white border border-neutral-300 rounded p-3">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-base font-semibold text-neutral-800">Notifications</h1>
-            <p className="text-xs text-neutral-500">All employee updates and actions</p>
+            <h1 className="text-2xl font-semibold text-neutral-900">Notifications</h1>
+            <p className="text-sm text-neutral-600">All employee updates and actions</p>
           </div>
           {notifications && notifications.length > 0 && (
             <button
@@ -66,7 +65,7 @@ const HRNotifications = () => {
                   clearAllHRNotifications();
                 }
               }}
-              className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+              className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 border border-red-300 rounded-lg font-medium flex items-center gap-1.5 transition-colors"
             >
               <Trash2 size={14} />
               Clear All
@@ -76,17 +75,17 @@ const HRNotifications = () => {
 
         {/* Filters */}
         {notifications && notifications.length > 0 && (
-          <div className="bg-white border border-neutral-300 rounded p-3 mb-3">
+          <div className="bg-white border border-neutral-300 rounded-lg p-3 mb-3">
             <div className="flex flex-wrap gap-3 items-center">
               <div className="flex items-center gap-2">
                 <Filter size={16} className="text-neutral-600" />
-                <span className="text-xs font-medium text-neutral-600">Filters:</span>
+                <span className="text-xs font-medium text-neutral-700">Filters:</span>
               </div>
               
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-1.5 text-xs border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
               >
                 <option value="all">All Types</option>
                 <option value="info">Info</option>
@@ -97,14 +96,14 @@ const HRNotifications = () => {
               <select
                 value={filterRead}
                 onChange={(e) => setFilterRead(e.target.value)}
-                className="px-3 py-1.5 text-xs border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
               >
                 <option value="all">All Status</option>
                 <option value="unread">Unread</option>
                 <option value="read">Read</option>
               </select>
 
-              <span className="ml-auto text-xs text-neutral-500">
+              <span className="ml-auto text-xs text-neutral-600 font-medium">
                 {filteredNotifications.length} of {notifications.length} notifications
               </span>
             </div>
@@ -112,9 +111,9 @@ const HRNotifications = () => {
         )}
 
         {/* Notifications List */}
-        <div className="bg-white border border-neutral-300 rounded">
+        <div className="flex-1 bg-white border border-neutral-300 rounded-lg overflow-hidden flex flex-col">
           {filteredNotifications.length > 0 ? (
-            <div className="divide-y divide-neutral-200">
+            <div className="flex-1 overflow-y-auto divide-y divide-neutral-200">
               {filteredNotifications.map((notif) => {
                 const employee = notif.employeeId ? getEmployee(notif.employeeId) : null;
                 
@@ -122,8 +121,8 @@ const HRNotifications = () => {
                   <div
                     key={notif.id}
                     className={`p-3 ${getNotificationBg(notif.type)} ${
-                      !notif.read ? 'border-l-4 border-l-primary-600' : ''
-                    } ${employee ? 'cursor-pointer hover:bg-opacity-80' : ''}`}
+                      !notif.read ? 'border-l-4 border-l-red-600' : ''
+                    } ${employee ? 'cursor-pointer hover:bg-opacity-80' : ''} transition-colors`}
                     onClick={() => employee && navigate(`/hr/employee/${employee.id}`)}
                   >
                     <div className="flex items-start gap-2.5">
@@ -131,7 +130,7 @@ const HRNotifications = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-neutral-900">{notif.message}</p>
+                            <p className="text-xs text-neutral-900 leading-relaxed">{notif.message}</p>
                             {employee && (
                               <div className="flex items-center gap-1.5 mt-1.5">
                                 <User size={12} className="text-neutral-500 flex-shrink-0" />
@@ -143,14 +142,14 @@ const HRNotifications = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             {!notif.read && (
-                              <span className="w-2 h-2 bg-primary-600 rounded-full flex-shrink-0 mt-1"></span>
+                              <span className="w-2 h-2 bg-red-600 rounded-full flex-shrink-0 mt-1"></span>
                             )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 deleteHRNotification(notif.id);
                               }}
-                              className="text-neutral-400 hover:text-primary-600 transition-colors"
+                              className="text-neutral-400 hover:text-red-600 transition-colors"
                               title="Delete notification"
                             >
                               <Trash2 size={14} />
@@ -167,10 +166,10 @@ const HRNotifications = () => {
               })}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <Bell className="mx-auto text-neutral-400 mb-3" size={40} />
-              <p className="text-sm text-neutral-600 mb-1">No notifications yet</p>
-              <p className="text-xs text-neutral-500">
+            <div className="flex-1 flex flex-col items-center justify-center p-6">
+              <Bell className="text-neutral-400 mb-3" size={48} />
+              <p className="text-sm text-neutral-900 font-medium mb-1">No notifications yet</p>
+              <p className="text-xs text-neutral-600">
                 You'll receive updates about employee actions here
               </p>
             </div>

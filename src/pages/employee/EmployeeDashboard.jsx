@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Clock, FileText, Calendar, CheckCircle } from 'lucide-react';
 import StatusCard from '../../components/common/StatusCard';
-import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import WorkflowStepper from '../../components/common/WorkflowStepper';
 
@@ -76,14 +75,15 @@ const EmployeeDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-grey">
-      <div className="max-w-[1400px] mx-auto p-4">
-        <div className="flex items-center justify-between mb-3 bg-white border border-neutral-300 rounded p-3">
+    <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 max-w-[1600px] mx-auto w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-base font-semibold text-neutral-800">Dashboard</h1>
-            <p className="text-xs text-neutral-500">Track your visa application progress</p>
+            <h1 className="text-2xl font-semibold text-neutral-900">Dashboard</h1>
+            <p className="text-sm text-neutral-600">Track your visa application progress</p>
           </div>
-        <div className="flex gap-2">
+          <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/employee/profile')}>
             View Full Profile
           </Button>
@@ -132,11 +132,11 @@ const EmployeeDashboard = () => {
               Upload Stamped Visa
             </Button>
           )}
+          </div>
         </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-3 mb-3">
           <StatusCard
             icon={Clock}
             label="Current Status"
@@ -168,12 +168,15 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Application Progress */}
-        <div className="bg-white border border-neutral-300 rounded px-6 mb-3">
+        <div className="bg-white border border-neutral-300 rounded-lg px-6 mb-3">
           <WorkflowStepper steps={workflowSteps} currentStep={getCurrentStepNumber()} />
         </div>
 
-        {/* Next Steps */}
-        <Card title="Next Steps" className="mt-3">
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto space-y-3">
+          {/* Next Steps */}
+          <div className="bg-white border border-neutral-300 rounded-lg p-4">
+            <h2 className="text-sm font-semibold text-neutral-900 mb-3">Next Steps</h2>
         <div className="space-y-3">
           {!employee.preArrival?.documentsUploaded && (
             <div className="flex items-center justify-between p-4 bg-primary-50 border border-primary-200 rounded-lg">
@@ -301,31 +304,31 @@ const EmployeeDashboard = () => {
               <p className="text-sm text-success-700">Your visa processing is complete. Welcome to UAE!</p>
             </div>
           )}
-        </div>
-      </Card>
+            </div>
+          </div>
 
-        {/* Application Details */}
-        <div className="mt-3">
-          <Card title="Application Details">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {/* Application Details */}
+          <div className="bg-white border border-neutral-300 rounded-lg p-4">
+            <h2 className="text-sm font-semibold text-neutral-900 mb-3">Application Details</h2>
+            <div className="grid grid-cols-4 gap-3 mb-3">
               <div>
                 <p className="text-xs text-neutral-500">Employee Name</p>
-                <p className="text-sm font-medium text-neutral-800">{employee.name}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.name}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Passport Number</p>
-                <p className="text-sm font-medium text-neutral-800">{employee.passportNumber || 'Not provided'}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.passportNumber || 'Not provided'}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Nationality</p>
-                <p className="text-sm font-medium text-neutral-800">{employee.nationality || 'Not provided'}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.nationality || 'Not provided'}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Job Title</p>
-                <p className="text-sm font-medium text-neutral-800">{employee.jobTitle || 'Not provided'}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.jobTitle || 'Not provided'}</p>
               </div>
             </div>
-            <div className="pt-3 border-t border-neutral-200">
+            <div className="pt-2 border-t border-neutral-200">
               <Button 
                 variant="primary" 
                 onClick={() => navigate('/employee/profile')}
@@ -334,7 +337,7 @@ const EmployeeDashboard = () => {
                 View Complete Profile & All Details
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>

@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Users, Clock, CheckCircle, FileText, RefreshCw, UserPlus, ArrowRight } from 'lucide-react';
+import { Users, Clock, CheckCircle, FileText, Bell, UserPlus, TrendingUp, Calendar, Eye } from 'lucide-react';
 import { useData } from '../../context/DataContext';
-import Button from '../../components/common/Button';
 
 const HRDashboard = () => {
   const navigate = useNavigate();
-  const { employees, refreshEmployees } = useData();
+  const { employees, refreshEmployees, getHRNotifications } = useData();
 
   // Auto-refresh every 3 seconds to check for updates
   useEffect(() => {
@@ -24,161 +23,157 @@ const HRDashboard = () => {
     completed: employees.filter(e => e.currentStage === 'completed').length,
   };
 
+  const notifications = getHRNotifications();
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
-    <div className="min-h-screen bg-grey">
-      <div className="max-w-[1400px] mx-auto p-4">
-        {/* Tight Header */}
-        <div className="flex items-center justify-between mb-3 bg-white border border-neutral-300 rounded p-3">
+    <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
+      <div className="flex-1 flex flex-col p-6 max-w-[1600px] mx-auto w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-base font-semibold text-neutral-800">HR Dashboard</h1>
-            <p className="text-xs text-neutral-500">Monitor employee visa applications</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => refreshEmployees()}
-              className="px-2.5 py-1.5 bg-neutral-100 border border-neutral-300 text-neutral-700 hover:bg-neutral-200 rounded text-xs flex items-center gap-1"
-            >
-              <RefreshCw size={13} />
-              <span>Refresh</span>
-            </button>
-            <Button 
-              onClick={() => navigate('/hr/create-employee')}
-              variant="primary"
-              icon={UserPlus}
-            >
-              Create Employee
-            </Button>
+            <h1 className="text-2xl font-semibold text-neutral-900">HR Dashboard</h1>
+            <p className="text-sm text-neutral-600">Manage visa requests and applications</p>
           </div>
         </div>
-
-        {/* Stats Grid with Colored Icons */}
-        <div className="grid grid-cols-4 gap-2 mb-3">
-          <div className="bg-white border border-neutral-300 rounded p-2.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <div className="w-7 h-7 rounded bg-blue-100 flex items-center justify-center">
-                  <Users className="text-blue-600" size={14} />
-                </div>
-                <p className="text-xs text-neutral-600 font-medium">Total</p>
+    
+        {/* Stats Grid */}
+        <div className="grid grid-cols-4 gap-3 mb-4">
+          <div className="bg-white rounded-lg border border-neutral-300 p-3 hover:shadow-sm transition-shadow cursor-pointer">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-blue-50"><Users className="w-4 h-4 text-blue-600" /></div>
+              <div>
+                <p className="text-xl font-semibold text-neutral-900">{stats.total}</p>
+                <p className="text-xs text-neutral-600">Total Employees</p>
               </div>
-              <p className="text-xl font-bold text-neutral-800">{stats.total}</p>
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-300 rounded p-2.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <div className="w-7 h-7 rounded bg-amber-100 flex items-center justify-center">
-                  <Clock className="text-amber-600" size={14} />
-                </div>
-                <p className="text-xs text-neutral-600 font-medium">Pre-Arrival</p>
+          <div className="bg-white rounded-lg border border-neutral-300 p-3 hover:shadow-sm transition-shadow cursor-pointer">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-amber-50"><Clock className="w-4 h-4 text-amber-600" /></div>
+              <div>
+                <p className="text-xl font-semibold text-neutral-900">{stats.preArrival}</p>
+                <p className="text-xs text-neutral-600">Pre-Arrival</p>
               </div>
-              <p className="text-xl font-bold text-neutral-800">{stats.preArrival}</p>
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-300 rounded p-2.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <div className="w-7 h-7 rounded bg-purple-100 flex items-center justify-center">
-                  <FileText className="text-purple-600" size={14} />
-                </div>
-                <p className="text-xs text-neutral-600 font-medium">In-Country</p>
+          <div className="bg-white rounded-lg border border-neutral-300 p-3 hover:shadow-sm transition-shadow cursor-pointer">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-purple-50"><FileText className="w-4 h-4 text-purple-600" /></div>
+              <div>
+                <p className="text-xl font-semibold text-neutral-900">{stats.inCountry}</p>
+                <p className="text-xs text-neutral-600">In-Country</p>
               </div>
-              <p className="text-xl font-bold text-neutral-800">{stats.inCountry}</p>
             </div>
           </div>
 
-          <div className="bg-white border border-success-300 rounded p-2.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <div className="w-7 h-7 rounded bg-success-100 flex items-center justify-center">
-                  <CheckCircle className="text-success-600" size={14} />
-                </div>
-                <p className="text-xs text-neutral-600 font-medium">Completed</p>
+          <div className="bg-white rounded-lg border border-neutral-300 p-3 hover:shadow-sm transition-shadow cursor-pointer">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-green-50"><CheckCircle className="w-4 h-4 text-green-600" /></div>
+              <div>
+                <p className="text-xl font-semibold text-neutral-900">{stats.completed}</p>
+                <p className="text-xs text-neutral-600">Completed</p>
               </div>
-              <p className="text-xl font-bold text-success-600">{stats.completed}</p>
             </div>
           </div>
         </div>
 
-        {/* Employee Table */}
-        <div className="bg-white border border-neutral-300 rounded overflow-hidden">
-          <div className="px-3 py-2.5 bg-neutral-100 border-b border-neutral-300 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-neutral-800">Recent Employees</h2>
-            {employees.length > 0 && (
-              <button
-                onClick={() => navigate('/hr/employees')}
-                className="text-xs text-neutral-600 hover:text-neutral-900 flex items-center gap-0.5 font-medium"
-              >
-                View All <ArrowRight size={14} />
+        {/* Main Content - Two Columns */}
+        <div className="grid grid-cols-2 gap-4 min-h-0">
+          {/* Left Column - Quick Actions */}
+          <div className="bg-white rounded-lg border border-neutral-300 p-4 flex flex-col">
+            <h2 className="text-base font-semibold text-neutral-900 mb-3">Quick Actions</h2>
+            <div className="space-y-2">
+              <button onClick={() => navigate('/hr/create-employee')} className="w-full flex items-center gap-2 p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                <UserPlus className="w-4 h-4" />
+                <span className="text-sm font-medium">Create New Employee</span>
               </button>
+              <button onClick={() => navigate('/hr/employees')} className="w-full flex items-center gap-2 p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-lg transition-colors border border-neutral-300">
+                <Users className="w-4 h-4 text-neutral-600" />
+                <span className="text-sm font-medium text-neutral-700">View All Employees</span>
+              </button>
+              <button onClick={() => navigate('/hr/notifications')} className="w-full flex items-center gap-2 p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-lg transition-colors border border-neutral-300">
+                <Bell className="w-4 h-4 text-neutral-600" />
+                <span className="text-sm font-medium text-neutral-700">View Notifications</span>
+              </button>
+              <button className="w-full flex items-center gap-2 p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-lg transition-colors border border-neutral-300">
+                <Calendar className="w-4 h-4 text-neutral-600" />
+                <span className="text-sm font-medium text-neutral-700">Schedule Biometrics</span>
+              </button>
+              <button className="w-full flex items-center gap-2 p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-lg transition-colors border border-neutral-300">
+                <TrendingUp className="w-4 h-4 text-neutral-600" />
+                <span className="text-sm font-medium text-neutral-700">Generate Report</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column - Recent Employees */}
+          <div className="bg-white rounded-lg border border-neutral-300 flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-neutral-300">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-neutral-900">Recent Employees</h2>
+                {employees.length > 0 && <button onClick={() => navigate('/hr/employees')} className="text-xs text-neutral-600 hover:text-neutral-900 font-medium">View All →</button>}
+              </div>
+            </div>
+
+            {employees.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-6">
+                <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+                  <Users className="text-neutral-400" size={24} />
+                </div>
+                <p className="text-sm text-neutral-900 font-medium mb-1">No employees yet</p>
+                <p className="text-xs text-neutral-600 mb-3">Create your first employee</p>
+                <button onClick={() => navigate('/hr/create-employee')} className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1.5">
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Create Employee
+                </button>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-neutral-50">
+                    <tr>
+                      <th className="text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide px-4 py-2">Employee</th>
+                      <th className="text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide px-4 py-2">Job Title</th>
+                      <th className="text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide px-4 py-2">Status</th>
+                      <th className="text-right text-xs font-semibold text-neutral-600 uppercase tracking-wide px-4 py-2">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200">
+                    {employees.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5).map((employee) => (
+                      <tr key={employee.id} className="hover:bg-neutral-50 transition-colors cursor-pointer" onClick={() => navigate(`/hr/employee/${employee.id}`)}>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-semibold text-neutral-700">{employee.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-neutral-900">{employee.name}</p>
+                              <p className="text-xs text-neutral-500">{employee.department}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5"><p className="text-sm text-neutral-700">{employee.jobTitle}</p></td>
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${employee.currentStage === 'completed' ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-700'}`}>
+                            {employee.currentStage === 'pre-arrival' ? 'Pre-Arrival' : employee.currentStage === 'in-country' ? 'In-Country' : 'Completed'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-right">
+                          <button onClick={(e) => { e.stopPropagation(); navigate(`/hr/employee/${employee.id}`); }} className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900 font-medium">
+                            <Eye className="w-3.5 h-3.5" />
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
-
-          {employees.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-10 h-10 rounded bg-neutral-200 flex items-center justify-center mx-auto mb-2">
-                <Users className="text-neutral-500" size={20} />
-              </div>
-              <p className="text-sm font-medium text-neutral-700 mb-1">No employees yet</p>
-              <p className="text-xs text-neutral-500 mb-3">Create your first employee</p>
-              <Button onClick={() => navigate('/hr/create-employee')} variant="primary" icon={UserPlus}>
-                Create Employee
-              </Button>
-            </div>
-          ) : (
-            <div>
-              {/* Table Header */}
-              <div className="grid grid-cols-12 gap-3 px-3 py-2.5 bg-neutral-50 border-b border-neutral-200">
-                <div className="col-span-5 text-xs font-semibold text-black-600 uppercase tracking-wide flex items-center h-8">Employee</div>
-                <div className="col-span-3 text-xs font-semibold text-black-600 uppercase tracking-wide flex items-center h-8">Position</div>
-                <div className="col-span-2 text-xs font-semibold text-black-600 uppercase tracking-wide flex items-center h-8">Department</div>
-                <div className="col-span-2 text-xs font-semibold text-black-600 uppercase tracking-wide flex items-center justify-end h-8">Status</div>
-              </div>
-              
-              {/* Table Rows */}
-              <div className="divide-y divide-neutral-200">
-                {employees
-                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                  .slice(0, 5)
-                  .map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="grid grid-cols-12 gap-3 px-3 py-2.5 hover:bg-neutral-50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/hr/employee/${employee.id}`)}
-                  >
-                    <div className="col-span-5 flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-400 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold text-white">
-                          {employee.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-neutral-800 truncate">{employee.name}</span>
-                    </div>
-                    <div className="col-span-3 flex items-center">
-                      <span className="text-sm text-neutral-600 truncate">{employee.jobTitle}</span>
-                    </div>
-                    <div className="col-span-2 flex items-center">
-                      <span className="text-sm text-neutral-600 truncate">{employee.department}</span>
-                    </div>
-                    <div className="col-span-2 flex items-center justify-end">
-                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                        employee.currentStage === 'completed' 
-                          ? 'bg-success-600 text-white' 
-                          : employee.currentStage === 'in-country'
-                          ? 'bg-neutral-600 text-white'
-                          : 'bg-neutral-400 text-white'
-                      }`}>
-                        {employee.currentStage === 'pre-arrival' ? 'PRE ARRIVAL' : 
-                         employee.currentStage === 'in-country' ? 'IN COUNTRY' : 'COMPLETED'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

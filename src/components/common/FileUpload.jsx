@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, X, FileText, Image as ImageIcon, CheckCircle } from 'lucide-react';
+import { Upload, X, FileText, CheckCircle } from 'lucide-react';
 
 const FileUpload = ({ label, accept, onChange, value, required = false }) => {
   const [preview, setPreview] = useState(value || null);
@@ -75,15 +75,15 @@ const FileUpload = ({ label, accept, onChange, value, required = false }) => {
   const isImage = preview && (preview.includes('image/') || preview.includes('data:image'));
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-medium text-neutral-700">
           {label} {required && <span className="text-primary-600">*</span>}
         </label>
       )}
 
       {!preview ? (
-        <label className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition-all">
+        <label className="border-2 border-dashed border-neutral-300 rounded-lg p-4 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition-all duration-200">
           <input
             type="file"
             accept={accept}
@@ -91,37 +91,38 @@ const FileUpload = ({ label, accept, onChange, value, required = false }) => {
             className="hidden"
             required={required}
           />
-          <Upload className="mx-auto text-gray-400 mb-2" size={32} />
-          <p className="text-sm text-gray-600">
+          <Upload className="mx-auto text-neutral-400 mb-2" size={28} />
+          <p className="text-sm text-neutral-700 font-medium">
             Click to upload or drag and drop
           </p>
-          <p className="text-xs text-gray-500 mt-1">
-            {accept || 'Any file type'}
+          <p className="text-xs text-neutral-500 mt-1">
+            {accept || 'Any file type'} • Max 2MB
           </p>
         </label>
       ) : (
-        <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+        <div className="border border-neutral-300 rounded-lg p-3 bg-neutral-50">
           <div className="flex items-start gap-3">
             {isImage ? (
-              <img src={preview} alt="Preview" className="w-16 h-16 object-cover rounded" />
+              <img src={preview} alt="Preview" className="w-14 h-14 object-cover rounded border border-neutral-200" />
             ) : (
-              <div className="w-16 h-16 bg-primary-100 rounded flex items-center justify-center">
-                <FileText className="text-primary-600" size={32} />
+              <div className="w-14 h-14 bg-primary-100 rounded flex items-center justify-center flex-shrink-0">
+                <FileText className="text-primary-600" size={24} />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{fileName}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <CheckCircle className="text-success-600" size={16} />
-                <span className="text-xs text-success-600">Uploaded</span>
+              <p className="text-sm font-medium text-neutral-900 truncate">{fileName}</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <CheckCircle className="text-success-600" size={14} />
+                <span className="text-xs text-success-600 font-medium">Uploaded</span>
               </div>
             </div>
             <button
               type="button"
               onClick={handleRemove}
-              className="p-1 hover:bg-gray-200 rounded"
+              className="p-1.5 hover:bg-neutral-200 rounded transition-colors"
+              title="Remove file"
             >
-              <X className="text-gray-500" size={20} />
+              <X className="text-neutral-600" size={18} />
             </button>
           </div>
         </div>

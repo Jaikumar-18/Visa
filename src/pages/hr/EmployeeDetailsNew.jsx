@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
-  User, FileText, CheckCircle, Clock, Download, Mail, Phone,
-  Briefcase, MapPin, Check, Circle, Eye, X
+  User, FileText, CheckCircle, Clock, Download,
+  IdCardLanyard, MapPin, Check, Circle, Eye, X
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
 
 const EmployeeDetailsNew = () => {
   const navigate = useNavigate();
@@ -47,369 +45,235 @@ const EmployeeDetailsNew = () => {
   ];
 
   const completedSteps = timelineSteps.filter(s => s.completed).length;
-  const progressPercentage = (completedSteps / timelineSteps.length) * 100;
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <Button variant="secondary" onClick={() => navigate('/hr/employees')}>
-          ← Back to Employees
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" icon={Download}>
-            Download Report
-          </Button>
-          <Button variant="outline" icon={Download}>
-            Download Documents
-          </Button>
-        </div>
-      </div>
-
-      {/* Employee Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-start gap-6">
+    <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
+      <div className="flex-1 flex flex-col p-6 max-w-[1600px] mx-auto w-full overflow-hidden">
+        {/* Employee Header Card */}
+        <div className="bg-white rounded-lg border border-neutral-300 p-3 mb-3">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-start gap-2">
+            <button onClick={() => navigate('/hr/employees')} className="p-1 hover:bg-neutral-100 rounded transition-colors" title="Back to Employees">
+              <svg className="w-4 h-4 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             {(employee.documents?.photo?.file || employee.passportPhoto) ? (
-              <img
-                src={employee.documents?.photo?.file || employee.passportPhoto}
-                alt={employee.name}
-                className="w-20 h-24 object-cover rounded-lg border-2 border-gray-300"
-              />
+              <img src={employee.documents?.photo?.file || employee.passportPhoto} alt={employee.name} className="w-12 h-16 object-cover rounded border border-neutral-300" />
             ) : (
-              <div className="w-20 h-24 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600 border-2 border-gray-300">
-                <User size={40} />
+              <div className="w-12 h-16 bg-neutral-100 rounded flex items-center justify-center text-neutral-400 border border-neutral-300">
+                <User size={18} />
               </div>
             )}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{employee.name}</h1>
-              <div className="flex items-center gap-4 text-gray-600">
-                <div className="flex items-center gap-2">
-                  <Briefcase size={16} />
-                  <span className="text-sm">{employee.jobTitle}</span>
+              <h1 className="text-base font-semibold text-neutral-900">{employee.name}</h1>
+              <div className="flex items-center gap-2 text-neutral-600 text-[10px] mt-0.5">
+                <div className="flex items-center gap-0.5">
+                  <IdCardLanyard size={10} />
+                  <span>{employee.jobTitle}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <MapPin size={16} />
-                  <span className="text-sm">{employee.department}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 mt-2 text-gray-500">
-                <div className="flex items-center gap-2">
-                  <Mail size={14} />
-                  <span className="text-sm">{employee.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone size={14} />
-                  <span className="text-sm">{employee.phone}</span>
+                <div className="flex items-center gap-0.5">
+                  <MapPin size={10} />
+                  <span>{employee.department}</span>
                 </div>
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-              employee.currentStage === 'completed' 
-                ? 'bg-success-100 text-success-700' 
-                : 'bg-primary-100 text-primary-700'
-            }`}>
-              {employee.currentStage}
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${employee.currentStage === 'completed' ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-700'}`}>
+              {employee.currentStage === 'pre-arrival' ? 'Pre-Arrival' : employee.currentStage === 'in-country' ? 'In-Country' : 'Completed'}
             </span>
-            <p className="text-sm text-gray-500 mt-2">
-              Created: {new Date(employee.createdAt).toLocaleDateString()}
-            </p>
+            <button className="p-1 hover:bg-neutral-100 rounded transition-colors" title="Download Report">
+              <Download className="w-4 h-4 text-neutral-600" />
+            </button>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="pt-6 border-t border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-gray-700">Overall Progress</span>
-            <span className="text-sm font-bold text-gray-900">{completedSteps}/{timelineSteps.length} Steps Completed</span>
+        {/* Horizontal Timeline */}
+        <div className="pt-3 border-t border-neutral-300">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-neutral-700">Application Timeline</span>
+            <span className="text-xs font-semibold text-neutral-900">{completedSteps}/{timelineSteps.length} Steps</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-primary-600 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
+          <div className="flex items-center justify-between">
+            {timelineSteps.map((step, index) => (
+              <div key={index} className="flex items-center flex-1">
+                <div className="flex flex-col items-center">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${step.completed ? 'bg-green-500 text-white' : 'bg-neutral-200 text-neutral-400'}`}>
+                    {step.completed ? <Check size={12} /> : <Circle size={8} />}
+                  </div>
+                  <p className={`text-[10px] mt-1 text-center max-w-[70px] leading-tight ${step.completed ? 'text-neutral-900 font-medium' : 'text-neutral-500'}`}>
+                    {step.label}
+                  </p>
+                </div>
+                {index < timelineSteps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-1 ${step.completed && timelineSteps[index + 1].completed ? 'bg-green-500' : 'bg-neutral-200'}`}></div>
+                )}
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-gray-500 mt-2">{Math.round(progressPercentage)}% Complete</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Timeline */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Timeline */}
-          <Card title="Application Timeline">
-            <div className="space-y-6">
-              {timelineSteps.map((step, index) => {
-                const showPhaseLabel = index === 0 || timelineSteps[index - 1].phase !== step.phase;
-                const isLastInPhase = index < timelineSteps.length - 1 && 
-                                      timelineSteps[index + 1].phase !== step.phase;
-
-                return (
-                  <div key={index}>
-                    {showPhaseLabel && (
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">{step.phase} Phase</h3>
-                    )}
-                    
-                    <div className="flex items-start gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          step.completed ? 'bg-success-500 text-white' : 'bg-gray-200 text-gray-400'
-                        }`}>
-                          {step.completed ? <Check size={20} /> : <Circle size={16} />}
-                        </div>
-                        {index < timelineSteps.length - 1 && !isLastInPhase && (
-                          <div className={`w-0.5 h-12 ${step.completed ? 'bg-success-500' : 'bg-gray-300'}`}></div>
-                        )}
-                      </div>
-                      <div className="flex-1 pb-4">
-                        <p className={`font-medium ${step.completed ? 'text-gray-900' : 'text-gray-500'}`}>
-                          {step.label}
-                        </p>
-                        {step.completed && (
-                          <span className="text-xs text-success-600">✓ Completed</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {isLastInPhase && index < timelineSteps.length - 1 && (
-                      <div className="my-4 ml-5 border-t border-dashed border-gray-300"></div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-
-          {/* Documents */}
-          <Card title="Uploaded Documents">
+        {/* Main Content - Two Columns */}
+        <div className="grid grid-cols-3 gap-4 flex-1 min-h-0 mt-4">
+          {/* Left Column - Documents */}
+          <div className="col-span-2 bg-white rounded-lg border border-neutral-300 p-4 overflow-auto">
+            <h2 className="text-sm font-semibold text-neutral-900 mb-3">Uploaded Documents</h2>
             {employee.documents && Object.keys(employee.documents).length > 0 ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 {Object.entries(employee.documents).map(([key, doc]) => {
                   if (!doc || !doc.file) return null;
                   return (
-                    <div key={key} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div key={key} className="border border-neutral-300 rounded-lg p-3 hover:bg-neutral-50 transition-colors">
                       <div className="flex items-center justify-between mb-2">
-                        <FileText className="text-primary-600" size={24} />
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          doc.status === 'approved' ? 'bg-success-100 text-success-700' : 'bg-gray-100 text-gray-700'
-                        }`}>
+                        <FileText className="text-neutral-600" size={18} />
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${doc.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-700'}`}>
                           {doc.status || 'Pending'}
                         </span>
                       </div>
-                      <p className="text-sm font-medium text-gray-900 capitalize">{key.replace(/([A-Z])/g, ' $1')}</p>
-                      <Button 
-                        variant="outline" 
-                        className="w-full mt-2 text-xs" 
-                        icon={Eye}
-                        onClick={() => setViewingDocument({ name: key, ...doc })}
-                      >
+                      <p className="text-xs font-medium text-neutral-900 capitalize mb-2">{key.replace(/([A-Z])/g, ' $1')}</p>
+                      <button onClick={() => setViewingDocument({ name: key, ...doc })} className="w-full px-2 py-1 bg-neutral-100 border border-neutral-300 rounded text-[10px] font-medium text-neutral-700 hover:bg-neutral-200 transition-colors flex items-center justify-center gap-1">
+                        <Eye className="w-3 h-3" />
                         View
-                      </Button>
+                      </button>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <FileText className="mx-auto text-gray-400 mb-3" size={48} />
-                <p className="text-gray-600">No documents uploaded yet</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Employee needs to upload documents to proceed
-                </p>
+              <div className="text-center py-6">
+                <FileText className="mx-auto text-neutral-400 mb-2" size={32} />
+                <p className="text-sm text-neutral-600">No documents uploaded yet</p>
               </div>
             )}
-          </Card>
-        </div>
+          </div>
 
-        {/* Right Column - Info & Actions */}
-        <div className="space-y-6">
-          {/* Quick Info */}
-          <Card title="Personal Information">
-            <div className="space-y-4">
+          {/* Right Column - Info & Actions */}
+          <div className="bg-white rounded-lg border border-neutral-300 p-4 overflow-auto">
+            <h2 className="text-sm font-semibold text-neutral-900 mb-3">Employee Information</h2>
+            <div className="space-y-3">
               <div>
-                <p className="text-xs text-gray-500 uppercase">Full Name</p>
-                <p className="font-medium text-gray-900">
-                  {employee.title} {employee.firstName} {employee.middleName} {employee.lastName}
-                </p>
-                {employee.firstNameArabic && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    {employee.firstNameArabic} {employee.middleNameArabic} {employee.lastNameArabic}
-                  </p>
-                )}
+                <p className="text-[10px] text-neutral-500 uppercase">Full Name</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.title} {employee.firstName} {employee.middleName} {employee.lastName}</p>
+                {employee.firstNameArabic && <p className="text-xs text-neutral-600">{employee.firstNameArabic} {employee.middleNameArabic} {employee.lastNameArabic}</p>}
               </div>
               {employee.motherName && (
                 <div>
-                  <p className="text-xs text-gray-500 uppercase">Mother's Name</p>
-                  <p className="font-medium text-gray-900">{employee.motherName}</p>
-                  {employee.motherNameArabic && (
-                    <p className="text-sm text-gray-600">{employee.motherNameArabic}</p>
-                  )}
+                  <p className="text-[10px] text-neutral-500 uppercase">Mother's Name</p>
+                  <p className="text-xs font-medium text-neutral-900">{employee.motherName}</p>
+                  {employee.motherNameArabic && <p className="text-xs text-neutral-600">{employee.motherNameArabic}</p>}
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase">Gender</p>
-                  <p className="font-medium text-gray-900">{employee.gender || 'N/A'}</p>
+                  <p className="text-[10px] text-neutral-500 uppercase">Gender</p>
+                  <p className="text-xs font-medium text-neutral-900">{employee.gender || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase">Marital Status</p>
-                  <p className="font-medium text-gray-900">{employee.maritalStatus || 'N/A'}</p>
+                  <p className="text-[10px] text-neutral-500 uppercase">Marital Status</p>
+                  <p className="text-xs font-medium text-neutral-900">{employee.maritalStatus || 'N/A'}</p>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Qualification</p>
-                <p className="font-medium text-gray-900">{employee.qualification || 'N/A'}</p>
+                <p className="text-[10px] text-neutral-500 uppercase">Qualification</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.qualification || 'N/A'}</p>
               </div>
               {employee.religion && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Religion</p>
-                    <p className="font-medium text-gray-900">{employee.religion}</p>
+                    <p className="text-[10px] text-neutral-500 uppercase">Religion</p>
+                    <p className="text-xs font-medium text-neutral-900">{employee.religion}</p>
                   </div>
                   {employee.faith && (
                     <div>
-                      <p className="text-xs text-gray-500 uppercase">Faith</p>
-                      <p className="font-medium text-gray-900">{employee.faith}</p>
+                      <p className="text-[10px] text-neutral-500 uppercase">Faith</p>
+                      <p className="text-xs font-medium text-neutral-900">{employee.faith}</p>
                     </div>
                   )}
                 </div>
               )}
               <div>
-                <p className="text-xs text-gray-500 uppercase">Passport Number</p>
-                <p className="font-medium text-gray-900">{employee.passportNumber || 'Not provided'}</p>
+                <p className="text-[10px] text-neutral-500 uppercase">Passport Number</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.passportNumber || 'Not provided'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Nationality</p>
-                <p className="font-medium text-gray-900">{employee.nationality || 'Not provided'}</p>
+                <p className="text-[10px] text-neutral-500 uppercase">Nationality</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.nationality || 'Not provided'}</p>
               </div>
-            </div>
-          </Card>
-
-          {/* Employment Info */}
-          <Card title="Employment Details">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs text-gray-500 uppercase">Visa Type</p>
-                <p className="font-medium text-gray-900">{employee.visaType}</p>
+              <div className="pt-2 border-t border-neutral-200">
+                <p className="text-[10px] text-neutral-500 uppercase">Visa Type</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.visaType}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Salary</p>
-                <p className="font-medium text-gray-900">AED {employee.salary}</p>
+                <p className="text-[10px] text-neutral-500 uppercase">Salary</p>
+                <p className="text-xs font-medium text-neutral-900">AED {employee.salary}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Start Date</p>
-                <p className="font-medium text-gray-900">{employee.startDate}</p>
+                <p className="text-[10px] text-neutral-500 uppercase">Start Date</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.startDate}</p>
               </div>
               {employee.dependentsVisa && (
                 <div>
-                  <p className="text-xs text-gray-500 uppercase">Dependents Visa</p>
-                  <p className="font-medium text-gray-900">{employee.dependentsVisa}</p>
+                  <p className="text-[10px] text-neutral-500 uppercase">Dependents Visa</p>
+                  <p className="text-xs font-medium text-neutral-900">{employee.dependentsVisa}</p>
                 </div>
               )}
-            </div>
-          </Card>
-
-          {/* Emergency Contact */}
-          {employee.emergencyContactName && (
-            <Card title="Emergency Contact">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase">Contact Name</p>
-                  <p className="font-medium text-gray-900">{employee.emergencyContactName}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase">Contact Number</p>
-                  <p className="font-medium text-gray-900">{employee.emergencyContact}</p>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Login Info */}
-          <Card title="Login Credentials">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs text-gray-500 uppercase">Email</p>
-                <p className="font-medium text-gray-900">{employee.email}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase">Password</p>
-                <code className="px-2 py-1 bg-gray-100 text-sm text-gray-800 rounded">{employee.password}</code>
-              </div>
-            </div>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card title="Quick Actions">
-            <div className="space-y-2">
-              {employee.preArrival?.documentsUploaded && !employee.preArrival?.hrReviewed ? (
-                <Button variant="primary" onClick={() => navigate(`/hr/review/${employee.id}`)} className="w-full">
-                  Review Documents
-                </Button>
-              ) : employee.inCountry?.arrivalUpdated && !employee.inCountry?.medicalAppointment?.status ? (
-                <Button variant="primary" onClick={() => navigate(`/hr/book-medical/${employee.id}`)} className="w-full">
-                  Book Medical
-                </Button>
-              ) : employee.inCountry?.biometricConfirmed && !employee.inCountry?.residenceVisaSubmitted ? (
-                <Button variant="primary" onClick={() => navigate(`/hr/submit-visa/${employee.id}`)} className="w-full">
-                  Submit Visa
-                </Button>
-              ) : employee.inCountry?.residenceVisaSubmitted && !employee.finalization?.contractInitiated ? (
-                <Button variant="primary" onClick={() => navigate(`/hr/initiate-contract/${employee.id}`)} className="w-full">
-                  Create Contract
-                </Button>
-              ) : employee.finalization?.contractSigned && !employee.finalization?.mohreSubmitted ? (
-                <Button variant="primary" onClick={() => navigate(`/hr/mohre-submission/${employee.id}`)} className="w-full">
-                  Submit MOHRE
-                </Button>
-              ) : employee.finalization?.mohreApproved && !employee.finalization?.visaReceived ? (
-                <Button variant="primary" onClick={() => navigate(`/hr/visa-application/${employee.id}`)} className="w-full">
-                  Apply Visa
-                </Button>
-              ) : employee.currentStage === 'completed' ? (
-                <div className="text-center py-6">
-                  <CheckCircle className="mx-auto text-success-600 mb-3" size={48} />
-                  <p className="text-success-700 font-medium">All Steps Complete!</p>
-                  <p className="text-sm text-gray-500 mt-1">No pending actions</p>
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <Clock className="mx-auto text-gray-400 mb-3" size={48} />
-                  <p className="text-gray-600 font-medium">Waiting for Employee</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {!employee.preArrival?.documentsUploaded 
-                      ? 'Employee needs to upload documents'
-                      : 'Employee needs to complete their tasks'}
-                  </p>
+              {employee.emergencyContactName && (
+                <div className="pt-2 border-t border-neutral-200">
+                  <p className="text-[10px] text-neutral-500 uppercase">Emergency Contact</p>
+                  <p className="text-xs font-medium text-neutral-900">{employee.emergencyContactName}</p>
+                  <p className="text-xs text-neutral-600">{employee.emergencyContact}</p>
                 </div>
               )}
+              <div className="pt-2 border-t border-neutral-200">
+                <p className="text-[10px] text-neutral-500 uppercase">Login Email</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.email}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-neutral-500 uppercase">Login Password</p>
+                <code className="px-2 py-0.5 bg-neutral-100 text-xs text-neutral-700 rounded border border-neutral-300">{employee.password}</code>
+              </div>
+              <div className="pt-2 border-t border-neutral-200">
+                <p className="text-xs font-semibold text-neutral-900 mb-2">Quick Actions</p>
+                {employee.preArrival?.documentsUploaded && !employee.preArrival?.hrReviewed ? (
+                  <button onClick={() => navigate(`/hr/review/${employee.id}`)} className="w-full px-2 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Review Documents
+                  </button>
+                ) : employee.inCountry?.arrivalUpdated && !employee.inCountry?.medicalAppointment?.status ? (
+                  <button onClick={() => navigate(`/hr/book-medical/${employee.id}`)} className="w-full px-2 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Book Medical
+                  </button>
+                ) : employee.inCountry?.biometricConfirmed && !employee.inCountry?.residenceVisaSubmitted ? (
+                  <button onClick={() => navigate(`/hr/submit-visa/${employee.id}`)} className="w-full px-2 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Submit Visa
+                  </button>
+                ) : employee.inCountry?.residenceVisaSubmitted && !employee.finalization?.contractInitiated ? (
+                  <button onClick={() => navigate(`/hr/initiate-contract/${employee.id}`)} className="w-full px-2 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Create Contract
+                  </button>
+                ) : employee.finalization?.contractSigned && !employee.finalization?.mohreSubmitted ? (
+                  <button onClick={() => navigate(`/hr/mohre-submission/${employee.id}`)} className="w-full px-2 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Submit MOHRE
+                  </button>
+                ) : employee.finalization?.mohreApproved && !employee.finalization?.visaReceived ? (
+                  <button onClick={() => navigate(`/hr/visa-application/${employee.id}`)} className="w-full px-2 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Apply Visa
+                  </button>
+                ) : employee.currentStage === 'completed' ? (
+                  <div className="text-center py-3">
+                    <CheckCircle className="mx-auto text-green-600 mb-1" size={24} />
+                    <p className="text-xs text-green-700 font-medium">All Steps Complete!</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-3">
+                    <Clock className="mx-auto text-neutral-400 mb-1" size={24} />
+                    <p className="text-xs text-neutral-600 font-medium">Waiting for Employee</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </Card>
-
-          {/* Stats */}
-          {/* <Card title="Statistics">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Days in Process</span>
-                <span className="font-bold text-gray-900">
-                  {(() => {
-                    const days = Math.floor((Date.now() - new Date(employee.createdAt)) / (1000 * 60 * 60 * 24));
-                    return days === 0 ? 'Today' : days;
-                  })()}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Completed Steps</span>
-                <span className="font-bold text-success-600">{completedSteps}/{timelineSteps.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Progress</span>
-                <span className="font-bold text-primary-600">{Math.round(progressPercentage)}%</span>
-              </div>
-            </div>
-          </Card> */}
+          </div>
         </div>
       </div>
 
@@ -470,12 +334,13 @@ const EmployeeDetailsNew = () => {
                 </span>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setViewingDocument(null)}>
+                <button onClick={() => setViewingDocument(null)} className="px-3 py-1.5 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors text-sm font-medium text-neutral-700">
                   Close
-                </Button>
-                <Button variant="primary" icon={Download}>
+                </button>
+                <button className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center gap-1.5">
+                  <Download className="w-3.5 h-3.5" />
                   Download
-                </Button>
+                </button>
               </div>
             </div>
           </div>
