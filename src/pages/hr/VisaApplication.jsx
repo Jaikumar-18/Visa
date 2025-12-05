@@ -21,7 +21,7 @@ const VisaApplication = () => {
         setEmployee(data);
       } catch (error) {
         console.error('Failed to load employee:', error);
-        toast.error('Failed to load employee data');
+        toast.error('Failed to Load Employee Data');
       } finally {
         setIsLoading(false);
       }
@@ -64,11 +64,11 @@ const VisaApplication = () => {
       );
 
       setProcessingStage('');
-      toast.success('Visa & Emirates ID Generated! Employee notified to upload stamped visa.');
+      toast.success('Visa & Emirates ID Generated Successfully! Employee Notified.');
       setTimeout(() => navigate('/hr/employees'), 1500);
     } catch (error) {
       console.error('Failed to apply for visa:', error);
-      toast.error(error.response?.data?.message || 'Failed to apply for visa');
+      toast.error(error.response?.data?.message || 'Failed to Apply for Visa');
       setProcessingStage('');
     } finally {
       setIsSubmitting(false);

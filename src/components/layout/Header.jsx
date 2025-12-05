@@ -1,18 +1,27 @@
-import { Bell, Moon, CheckCircle, Info, AlertCircle, X } from 'lucide-react';
+import { Bell, Moon, CheckCircle, Info, AlertCircle, X, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import Badge from '../common/Badge';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import { useCompany } from '../../context/CompanyContext';
+import SwitchCompanyModal from '../common/SwitchCompanyModal';
 
 const Header = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { getEmployee, getHRNotifications, getEmployeeNotifications, refreshEmployees } = useData();
+  const { selectedCompany, fetchCompanies } = useCompany();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [hrNotifications, setHrNotifications] = useState([]);
   const [employeeNotifications, setEmployeeNotifications] = useState([]);
   const dropdownRef = useRef(null);
+
+  const handleOpenCompanyModal = () => {
+    fetchCompanies(); // Fetch companies when opening modal
+    setShowCompanyModal(true);
+  };
   
   const notifications = currentUser?.role === 'employee' 
     ? employeeNotifications
@@ -74,8 +83,14 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-neutral-300">
-      <div className="px-4 py-2.5">
+    <>
+      <SwitchCompanyModal 
+        isOpen={showCompanyModal} 
+        onClose={() => setShowCompanyModal(false)} 
+      />
+      
+      <header className="bg-white border-b border-neutral-300">
+        <div className="px-4 py-2.5">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-neutral-700 flex items-center justify-center">
@@ -88,6 +103,20 @@ const Header = () => {
           </div>
 
           <div className="flex items-center gap-1">
+            {/* Switch Company Button - Only for HR */}
+            {currentUser?.role === 'hr' && (
+              <button 
+                onClick={handleOpenCompanyModal}
+                className="flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-100 rounded text-xs font-medium text-neutral-700 border border-neutral-300"
+                title="Switch Company"
+              >
+                <Building2 size={14} />
+                <span className="hidden sm:inline">
+                  {selectedCompany ? selectedCompany.company_name : 'Select Company'}
+                </span>
+              </button>
+            )}
+            
             <button className="p-2 hover:bg-neutral-100 rounded">
               <Moon size={16} className="text-neutral-600" />
             </button>
@@ -187,8 +216,9 @@ const Header = () => {
             </div>
           </div>
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 };
 

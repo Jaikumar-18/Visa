@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
+import { CompanyProvider } from './context/CompanyContext';
 import { Toaster } from 'react-hot-toast';
 
 // Layouts
@@ -63,8 +64,9 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <DataProvider>
-          <Toaster position="top-right" />
-          <Routes>
+          <CompanyProvider>
+            <Toaster position="top-right" />
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login/hr" element={<HRLogin />} />
@@ -119,7 +121,8 @@ function App() {
 
             {/* Catch all */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </CompanyProvider>
         </DataProvider>
       </AuthProvider>
     </BrowserRouter>

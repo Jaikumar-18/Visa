@@ -22,7 +22,7 @@ const BookMedicalAppointment = () => {
         setEmployee(data);
       } catch (error) {
         console.error('Failed to load employee:', error);
-        toast.error('Failed to load employee data');
+        toast.error('Failed to Load Employee Data');
       } finally {
         setIsLoading(false);
       }
@@ -87,11 +87,11 @@ const BookMedicalAppointment = () => {
         'info'
       );
 
-      toast.success('Medical appointment booked successfully!');
+      toast.success('Medical Appointment Booked Successfully!');
       setTimeout(() => navigate('/hr/employees'), 1500);
     } catch (error) {
       console.error('Failed to book appointment:', error);
-      toast.error(error.response?.data?.message || 'Failed to book appointment');
+      toast.error(error.response?.data?.message || 'Failed to Book Appointment');
     } finally {
       setIsSubmitting(false);
     }

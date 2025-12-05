@@ -21,7 +21,7 @@ const InitiateContract = () => {
         setEmployee(data);
       } catch (error) {
         console.error('Failed to load employee:', error);
-        toast.error('Failed to load employee data');
+        toast.error('Failed to Load Employee Data');
       } finally {
         setIsLoading(false);
       }
@@ -91,11 +91,11 @@ const InitiateContract = () => {
         'info'
       );
 
-      toast.success('Contract sent to employee for signature!');
+      toast.success('Contract Sent to Employee for Signature!');
       setTimeout(() => navigate('/hr/employees'), 1500);
     } catch (error) {
       console.error('Failed to initiate contract:', error);
-      toast.error(error.response?.data?.message || 'Failed to initiate contract');
+      toast.error(error.response?.data?.message || 'Failed to Initiate Contract');
     } finally {
       setIsSubmitting(false);
     }

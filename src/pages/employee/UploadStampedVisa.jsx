@@ -25,7 +25,7 @@ const UploadStampedVisa = () => {
           setEmployee(data);
         } catch (error) {
           console.error('Failed to load employee:', error);
-          toast.error('Failed to load employee data');
+          toast.error('Failed to Load Employee Data');
         } finally {
           setIsLoading(false);
         }
@@ -60,7 +60,7 @@ const UploadStampedVisa = () => {
     setIsSubmitting(true);
 
     if (!stampedVisa) {
-      toast.error('Please upload stamped visa');
+      toast.error('Please Upload Stamped Visa');
       setIsSubmitting(false);
       return;
     }
@@ -80,7 +80,7 @@ const UploadStampedVisa = () => {
       setTimeout(() => navigate('/employee/dashboard'), 2000);
     } catch (error) {
       console.error('Failed to upload stamped visa:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload stamped visa');
+      toast.error(error.response?.data?.message || 'Failed to Upload Stamped Visa');
     } finally {
       setIsSubmitting(false);
     }

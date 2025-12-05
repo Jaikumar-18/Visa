@@ -25,12 +25,12 @@ const EmailSettings = () => {
   const handleSave = () => {
     // Save to localStorage
     localStorage.setItem('emailSettings', JSON.stringify(settings));
-    toast.success('Email settings saved successfully!');
+    toast.success('Email Settings Saved Successfully!');
   };
 
   const handleTestEmail = async () => {
     if (!testEmail) {
-      toast.error('Please enter a test email address');
+      toast.error('Please Enter a Test Email Address');
       return;
     }
 
@@ -42,12 +42,12 @@ const EmailSettings = () => {
       
       setTimeout(() => {
         setIsTesting(false);
-        toast.success(`Test email sent to ${testEmail}! Check console for details.`);
+        toast.success(`Test Email Sent to ${testEmail} Successfully!`);
       }, 1500);
       
     } catch (error) {
       setIsTesting(false);
-      toast.error('Failed to send test email');
+      toast.error('Failed to Send Test Email');
     }
   };
 

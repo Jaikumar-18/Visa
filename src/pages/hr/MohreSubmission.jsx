@@ -20,7 +20,7 @@ const MohreSubmission = () => {
         setEmployee(data);
       } catch (error) {
         console.error('Failed to load employee:', error);
-        toast.error('Failed to load employee data');
+        toast.error('Failed to Load Employee Data');
       } finally {
         setIsLoading(false);
       }
@@ -61,11 +61,11 @@ const MohreSubmission = () => {
         'success'
       );
 
-      toast.success('MOHRE submission successful!');
+      toast.success('MOHRE Submission Successful!');
       setTimeout(() => navigate(`/hr/visa-application/${employee.id}`), 1500);
     } catch (error) {
       console.error('Failed to submit to MOHRE:', error);
-      toast.error(error.response?.data?.message || 'Failed to submit to MOHRE');
+      toast.error(error.response?.data?.message || 'Failed to Submit to MOHRE');
     } finally {
       setIsSubmitting(false);
     }

@@ -24,7 +24,7 @@ const SignContract = () => {
           setEmployee(data);
         } catch (error) {
           console.error('Failed to load employee:', error);
-          toast.error('Failed to load employee data');
+          toast.error('Failed to Load Employee Data');
         } finally {
           setIsLoading(false);
         }
@@ -72,7 +72,7 @@ const SignContract = () => {
 
   const handleSign = async () => {
     if (!agreed) {
-      toast.error('Please agree to the terms and conditions');
+      toast.error('Please Agree to the Terms and Conditions');
       return;
     }
 
@@ -88,11 +88,11 @@ const SignContract = () => {
         currentUser.employeeId
       );
 
-      toast.success('Contract signed successfully! HR will now submit to MOHRE.');
+      toast.success('Contract Signed Successfully! HR Will Now Submit to MOHRE.');
       setTimeout(() => navigate('/employee/dashboard'), 1500);
     } catch (error) {
       console.error('Failed to sign contract:', error);
-      toast.error(error.response?.data?.message || 'Failed to sign contract');
+      toast.error(error.response?.data?.message || 'Failed to Sign Contract');
     } finally {
       setIsSubmitting(false);
     }

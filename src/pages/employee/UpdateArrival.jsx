@@ -24,7 +24,7 @@ const UpdateArrival = () => {
           setEmployee(data);
         } catch (error) {
           console.error('Failed to load employee:', error);
-          toast.error('Failed to load employee data');
+          toast.error('Failed to Load Employee Data');
         } finally {
           setIsLoading(false);
         }
@@ -70,11 +70,11 @@ const UpdateArrival = () => {
         currentUser.employeeId
       );
 
-      toast.success('Arrival information updated successfully!');
+      toast.success('Arrival Information Updated Successfully!');
       setTimeout(() => navigate('/employee/dashboard'), 1500);
     } catch (error) {
       console.error('Failed to update arrival:', error);
-      toast.error(error.response?.data?.message || 'Failed to update arrival information');
+      toast.error(error.response?.data?.message || 'Failed to Update Arrival Information');
     } finally {
       setIsSubmitting(false);
     }

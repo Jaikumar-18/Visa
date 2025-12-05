@@ -53,7 +53,7 @@ const ReviewDocuments = () => {
         setImageUrls(urls);
       } catch (error) {
         console.error('Failed to load data:', error);
-        toast.error('Failed to load employee data');
+        toast.error('Failed to Load Employee Data');
       } finally {
         setIsLoading(false);
       }
@@ -116,11 +116,11 @@ const ReviewDocuments = () => {
         'success'
       );
 
-      toast.success('Documents approved successfully!');
+      toast.success('Documents Approved Successfully!');
       setTimeout(() => navigate('/hr/employees'), 1500);
     } catch (error) {
       console.error('Failed to approve documents:', error);
-      toast.error(error.response?.data?.message || 'Failed to approve documents');
+      toast.error(error.response?.data?.message || 'Failed to Approve Documents');
     } finally {
       setIsSubmitting(false);
     }
@@ -148,11 +148,11 @@ const ReviewDocuments = () => {
         'warning'
       );
 
-      toast.success('Review submitted. Employee notified.');
+      toast.success('Review Submitted Successfully! Employee Notified.');
       setTimeout(() => navigate('/hr/employees'), 1500);
     } catch (error) {
       console.error('Failed to reject documents:', error);
-      toast.error(error.response?.data?.message || 'Failed to submit review');
+      toast.error(error.response?.data?.message || 'Failed to Submit Review');
     } finally {
       setIsSubmitting(false);
     }

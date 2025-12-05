@@ -59,7 +59,7 @@ const MyProfile = () => {
           }
         } catch (error) {
           console.error('MyProfile: Failed to load employee:', error);
-          toast.error('Failed to load profile data');
+          toast.error('Failed to Load Profile Data');
         } finally {
           setIsLoading(false);
         }

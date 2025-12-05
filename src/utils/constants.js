@@ -17,9 +17,34 @@ export const DEPARTMENTS = [
 ];
 
 export const MEDICAL_CENTERS = [
-  { id: 1, name: 'Dubai Health Center', location: 'Al Barsha, Dubai' },
-  { id: 2, name: 'Abu Dhabi Medical', location: 'Al Nahyan, Abu Dhabi' },
-  { id: 3, name: 'Sharjah Clinic', location: 'Al Majaz, Sharjah' },
+  { 
+    id: 1, 
+    name: 'Ahalia Hospital Mussafah', 
+    location: 'Musaffah, Abu Dhabi',
+    address: 'Ahalia Hospital Mussafah, Musaffah, 2419 Abu Dhabi',
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Ahalia+Hospital+Mussafah+Abu+Dhabi'
+  },
+  { 
+    id: 2, 
+    name: 'Burjeel Medical City', 
+    location: 'Mohamed Bin Zayed City, Abu Dhabi',
+    address: 'Burjeel Medical City, 28th St - Mohamed Bin Zayed City - Abu Dhabi, Abu Dhabi 92510',
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Burjeel+Medical+City+Abu+Dhabi'
+  },
+  { 
+    id: 3, 
+    name: 'Heart Beat Medical Center', 
+    location: 'Mushrif Area, Abu Dhabi',
+    address: 'Heart Beat Medical Center & One Day Surgery, Plot 103, Mushrif Area - Sheikh Rashid Bin Saeed St, Abu Dhabi 31757',
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Heart+Beat+Medical+Center+Abu+Dhabi'
+  },
+  { 
+    id: 4, 
+    name: 'NMC Clinic', 
+    location: 'Electra Street, Abu Dhabi',
+    address: 'NMC Clinic, Electra Street, Abu Dhabi',
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=NMC+Clinic+Electra+Street+Abu+Dhabi'
+  },
 ];
 
 export const STAGES = {

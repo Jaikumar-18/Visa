@@ -54,7 +54,8 @@ const EmployeeDetails = () => {
         }
       } catch (error) {
         console.error('Failed to load employee:', error);
-        toast.error('Failed to load employee data');
+        toast.error('Failed to Load Employee Data');
+        setTimeout(() => navigate('/hr/employees'), 2000);
       } finally {
         setIsLoading(false);
       }

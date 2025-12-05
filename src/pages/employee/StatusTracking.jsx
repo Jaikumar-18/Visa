@@ -25,7 +25,7 @@ const StatusTracking = () => {
           setEmployee(data);
         } catch (error) {
           console.error('Failed to load employee:', error);
-          toast.error('Failed to load status data');
+          toast.error('Failed to Load Status Data');
         } finally {
           setIsLoading(false);
         }

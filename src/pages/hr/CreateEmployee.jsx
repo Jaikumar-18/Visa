@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, CheckCircle } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import { useCompany } from '../../context/CompanyContext';
 import { VISA_TYPES, DEPARTMENTS, STAGES } from '../../utils/constants';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
@@ -72,12 +73,13 @@ const transliterateToEnglish = (text) => {
 const CreateEmployee = () => {
   const navigate = useNavigate();
   const { addEmployee } = useData();
-  const [step, setStep] = useState(1); // 1: Terms, 2: Form
+  const { selectedCompany } = useCompany();
+  const [step, setStep] = useState(1); // 1: Terms, 2: Generic Info, 3: Employee Details
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    // Basic Info (filled by HR)
+    // Employee Basic Info
     title: '',
     firstName: '',
     firstNameArabic: '',
@@ -87,20 +89,36 @@ const CreateEmployee = () => {
     lastNameArabic: '',
     email: '',
     phone: '',
-    gender: '',
-    maritalStatus: '',
-    qualification: '',
-    // Company Details (filled by HR)
+    // Company Details
     companyName: '',
     establishmentCardNumber: '',
     laborContractNumber: '',
-    // Job Info (filled by HR)
+    // HR Details
+    hrName: '',
+    hrPhone: '',
+    hrEmail: '',
+    serviceType: '',
+    submittedBy: '',
+    submittedUserDesignation: '',
+    // Employment Details
     jobTitle: '',
     department: '',
     salary: '',
     visaType: '',
     startDate: '',
   });
+
+  // Auto-fill company details when company is selected
+  useEffect(() => {
+    if (selectedCompany) {
+      setFormData(prev => ({
+        ...prev,
+        companyName: selectedCompany.company_name || '',
+        establishmentCardNumber: selectedCompany.establishment_card_number || '',
+        laborContractNumber: selectedCompany.labor_contract_number || '',
+      }));
+    }
+  }, [selectedCompany]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -130,36 +148,64 @@ const CreateEmployee = () => {
   const handleTermsSubmit = (e) => {
     e.preventDefault();
     if (!termsAccepted) {
-      toast.error('Please accept terms and conditions');
+      toast.error('Please Accept Terms and Conditions');
       return;
     }
     setStep(2);
   };
 
+  const handleGenericInfoSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validation for Generic Information (Company & HR Details)
+    if (!formData.companyName || !formData.establishmentCardNumber || !formData.laborContractNumber ||
+        !formData.hrName || !formData.hrPhone || !formData.hrEmail || !formData.serviceType || 
+        !formData.submittedBy || !formData.submittedUserDesignation) {
+      toast.error('Please Provide All Required Company and HR Details');
+      return;
+    }
+    
+    setStep(3);
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation for Employee Details (Personal Information & Employment)
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone ||
+        !formData.jobTitle || !formData.department || !formData.salary || !formData.visaType || !formData.startDate) {
+      toast.error('Please Provide All Required Employee Details');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      // Create employee via API
-      const result = await addEmployee(formData);
+      // Add default values for fields that employee will fill later
+      const employeeData = {
+        ...formData,
+        gender: 'Male', // Default value, employee will update
+        maritalStatus: 'Single', // Default value, employee will update
+        qualification: 'Graduate', // Default value, employee will update
+      };
       
-      // Show success with password
+      // Create employee via API
+      const result = await addEmployee(employeeData);
+      
+      // Show success with email notification info
       toast.success(
         <div>
-          <p className="font-semibold">Employee created successfully!</p>
-          <p className="text-sm mt-1">Email: {result.email}</p>
-          <p className="text-sm">Password: {result.password}</p>
-          <p className="text-xs mt-2 text-amber-600">⚠️ Save this password - it won't be shown again!</p>
+          <p className="font-semibold">Employee Created Successfully!</p>
+          <p className="text-xs mt-1">Welcome Email Sent to {formData.email}</p>
         </div>,
-        { duration: 10000 }
+        { duration: 3000 }
       );
       
       setTimeout(() => {
         navigate('/hr/employees');
       }, 2000);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create employee');
+      toast.error(error.response?.data?.message || 'Failed to Create Employee');
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +213,8 @@ const CreateEmployee = () => {
 
   const steps = [
     { label: 'Terms And Conditions' },
-    { label: 'General Information' },
+    { label: 'Generic Information' },
+    { label: 'Employee Details' },
   ];
 
   return (
@@ -228,17 +275,89 @@ const CreateEmployee = () => {
                     Cancel
                   </Button>
                   <Button type="submit" variant="primary">
-                    Continue to Employee Details
+                    Continue to Company & HR Details
                   </Button>
                 </div>
               </form>
             )}
 
             {step === 2 && (
+              <form onSubmit={handleGenericInfoSubmit} className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserPlus className="w-5 h-5 text-neutral-700" />
+                  <h2 className="text-base font-semibold text-neutral-900">Step 2: Generic Information</h2>
+                </div>
+
+                {/* Company Details */}
+                <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                    Company Details
+                    {selectedCompany && (
+                      <span className="ml-2 text-xs text-green-600 font-normal">(Auto-filled from selected company)</span>
+                    )}
+                  </h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input
+                      label="Company Name"
+                      name="companyName"
+                      value={formData.companyName}
+                      onChange={handleInputChange}
+                      required
+                      disabled={!!selectedCompany}
+                      placeholder="e.g. ABC Technologies LLC"
+                    />
+                    <Input
+                      label="Establishment Card Number"
+                      name="establishmentCardNumber"
+                      value={formData.establishmentCardNumber}
+                      onChange={handleInputChange}
+                      required
+                      disabled={!!selectedCompany}
+                      placeholder="e.g. EST-123456"
+                    />
+                    <Input
+                      label="Labor Contract Number"
+                      name="laborContractNumber"
+                      value={formData.laborContractNumber}
+                      onChange={handleInputChange}
+                      required
+                      disabled={!!selectedCompany}
+                      placeholder="e.g. LC-2025-001"
+                    />
+                  </div>
+                </div>
+
+                {/* HR Details */}
+                <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">HR Details</h3>
+                  <div className="grid grid-cols-3 gap-3 mb-3">
+                    <Input label="HR Name" name="hrName" value={formData.hrName} onChange={handleInputChange} required placeholder="e.g. John Smith" />
+                    <Input label="HR Phone Number" name="hrPhone" type="tel" value={formData.hrPhone} onChange={handleInputChange} required placeholder="+971 XX XXX XXXX" />
+                    <Input label="HR Email" name="hrEmail" type="email" value={formData.hrEmail} onChange={handleInputChange} required placeholder="hr@company.com" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input label="Service Type" name="serviceType" value={formData.serviceType} onChange={handleInputChange} required placeholder="e.g. New Employment Residency Visa" />
+                    <Input label="Submitted By" name="submittedBy" value={formData.submittedBy} onChange={handleInputChange} required placeholder="e.g. Portal User" />
+                    <Input label="Submitted User Designation" name="submittedUserDesignation" value={formData.submittedUserDesignation} onChange={handleInputChange} required placeholder="e.g. HR Manager" />
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+                    Back
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    Continue to Employee Details
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {step === 3 && (
               <form onSubmit={handleFormSubmit} className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
                   <UserPlus className="w-5 h-5 text-neutral-700" />
-                  <h2 className="text-base font-semibold text-neutral-900">Step 2: General Information</h2>
+                  <h2 className="text-base font-semibold text-neutral-900">Step 3: Employee Details</h2>
                 </div>
 
                 {/* Personal Information */}
@@ -267,48 +386,9 @@ const CreateEmployee = () => {
                     <Input label="الاسم الأوسط (Arabic)" name="middleNameArabic" value={formData.middleNameArabic} onChange={handleInputChange} dir="rtl" labelDir="rtl" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <Input label="Last Name (English)" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
                     <Input label="اسم العائلة (Arabic)" name="lastNameArabic" value={formData.lastNameArabic} onChange={handleInputChange} dir="rtl" labelDir="rtl" />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-neutral-700 mb-1 block">
-                        Qualification <span className="text-red-600">*</span>
-                      </label>
-                      <select name="qualification" value={formData.qualification} onChange={handleInputChange} required
-                        className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
-                        <option value="">Select</option>
-                        <option value="Graduate">Graduate</option>
-                        <option value="Post Graduate">Post Graduate</option>
-                        <option value="Diploma">Diploma</option>
-                        <option value="High School">High School</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-neutral-700 mb-1 block">
-                        Gender <span className="text-red-600">*</span>
-                      </label>
-                      <select name="gender" value={formData.gender} onChange={handleInputChange} required
-                        className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
-                        <option value="">Select</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-neutral-700 mb-1 block">
-                        Marital Status <span className="text-red-600">*</span>
-                      </label>
-                      <select name="maritalStatus" value={formData.maritalStatus} onChange={handleInputChange} required
-                        className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
-                        <option value="">Select</option>
-                        <option value="Single">Single</option>
-                        <option value="Married">Married</option>
-                        <option value="Divorced">Divorced</option>
-                      </select>
-                    </div>
                   </div>
                 </div>
 
@@ -318,37 +398,6 @@ const CreateEmployee = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <Input label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required placeholder="employee@company.com" />
                     <Input label="Phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} required placeholder="+971 XX XXX XXXX" />
-                  </div>
-                </div>
-
-                {/* Company Details */}
-                <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
-                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">Company Details</h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    <Input
-                      label="Company Name"
-                      name="companyName"
-                      value={formData.companyName}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="e.g. ABC Technologies LLC"
-                    />
-                    <Input
-                      label="Establishment Card Number"
-                      name="establishmentCardNumber"
-                      value={formData.establishmentCardNumber}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="e.g. EST-123456"
-                    />
-                    <Input
-                      label="Labor Contract Number"
-                      name="laborContractNumber"
-                      value={formData.laborContractNumber}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="e.g. LC-2025-001"
-                    />
                   </div>
                 </div>
 
@@ -389,7 +438,7 @@ const CreateEmployee = () => {
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+                  <Button type="button" variant="secondary" onClick={() => setStep(2)}>
                     Back
                   </Button>
                   <Button type="submit" variant="primary" disabled={isLoading}>

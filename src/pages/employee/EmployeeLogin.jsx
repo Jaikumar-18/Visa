@@ -20,10 +20,10 @@ const EmployeeLogin = () => {
     const result = await login(email, password);
     
     if (result.success) {
-      toast.success('Login successful!');
+      toast.success('Login Successful!');
       setTimeout(() => navigate('/employee/dashboard'), 500);
     } else {
-      toast.error(result.message || 'Invalid credentials');
+      toast.error(result.message || 'Invalid Credentials');
     }
     
     setIsLoading(false);

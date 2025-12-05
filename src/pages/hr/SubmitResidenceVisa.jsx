@@ -20,7 +20,7 @@ const SubmitResidenceVisa = () => {
         setEmployee(data);
       } catch (error) {
         console.error('Failed to load employee:', error);
-        toast.error('Failed to load employee data');
+        toast.error('Failed to Load Employee Data');
       } finally {
         setIsLoading(false);
       }
@@ -62,11 +62,11 @@ const SubmitResidenceVisa = () => {
         'info'
       );
 
-      toast.success('Residence Visa application submitted successfully!');
+      toast.success('Residence Visa Application Submitted Successfully!');
       setTimeout(() => navigate('/hr/employees'), 1500);
     } catch (error) {
       console.error('Failed to submit visa:', error);
-      toast.error(error.response?.data?.message || 'Failed to submit residence visa');
+      toast.error(error.response?.data?.message || 'Failed to Submit Residence Visa');
     } finally {
       setIsSubmitting(false);
     }

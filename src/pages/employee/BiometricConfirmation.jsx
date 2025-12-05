@@ -25,7 +25,7 @@ const BiometricConfirmation = () => {
           setEmployee(data);
         } catch (error) {
           console.error('Failed to load employee:', error);
-          toast.error('Failed to load employee data');
+          toast.error('Failed to Load Employee Data');
         } finally {
           setIsLoading(false);
         }
@@ -93,11 +93,11 @@ const BiometricConfirmation = () => {
         currentUser.employeeId
       );
 
-      toast.success('Biometric confirmation submitted successfully!');
+      toast.success('Biometric Confirmation Submitted Successfully!');
       setTimeout(() => navigate('/employee/dashboard'), 1500);
     } catch (error) {
       console.error('Failed to confirm biometric:', error);
-      toast.error(error.response?.data?.message || 'Failed to confirm biometric');
+      toast.error(error.response?.data?.message || 'Failed to Confirm Biometric');
     } finally {
       setIsSubmitting(false);
     }

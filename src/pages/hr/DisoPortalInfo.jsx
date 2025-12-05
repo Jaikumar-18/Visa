@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Building2, FileText } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import { useCompany } from '../../context/CompanyContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import toast from 'react-hot-toast';
@@ -10,6 +11,7 @@ const DisoPortalInfo = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { getEmployee, workflow } = useData();
+  const { selectedCompany } = useCompany();
   const [employee, setEmployee] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,30 +37,36 @@ const DisoPortalInfo = () => {
         const data = await getEmployee(parseInt(id));
         setEmployee(data);
         
-        // Pre-fill with data from employee
-        setFormData({
-          companyName: data.company_name || '',
-          establishmentCardNumber: data.establishment_card_number || '',
-          laborContractNumber: data.labor_contract_number || '',
-          basicSalary: data.salary || '',
-          housingAllowance: '',
-          transportAllowance: '',
-          otherAllowances: '',
-          accommodationType: '',
-          accommodationAddress: '',
-          insuranceProvider: '',
-          insurancePolicyNumber: '',
-          insuranceExpiryDate: '',
-        });
+        // Pre-fill with data from employee - only set initial values
+        setFormData(prev => ({
+          ...prev,
+          companyName: data.company_name || prev.companyName,
+          establishmentCardNumber: data.establishment_card_number || prev.establishmentCardNumber,
+          laborContractNumber: data.labor_contract_number || prev.laborContractNumber,
+          basicSalary: data.salary || prev.basicSalary,
+        }));
       } catch (error) {
         console.error('Failed to load employee:', error);
-        toast.error('Failed to load employee data');
+        toast.error('Failed to Load Employee Data');
       } finally {
         setIsLoading(false);
       }
     };
     loadEmployee();
-  }, [id, getEmployee]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]); // Only run when id changes
+
+  // Auto-fill company details when company is selected
+  useEffect(() => {
+    if (selectedCompany) {
+      setFormData(prev => ({
+        ...prev,
+        companyName: selectedCompany.company_name || '',
+        establishmentCardNumber: selectedCompany.establishment_card_number || '',
+        laborContractNumber: selectedCompany.labor_contract_number || '',
+      }));
+    }
+  }, [selectedCompany]);
 
   if (isLoading) {
     return (
@@ -114,14 +122,14 @@ const DisoPortalInfo = () => {
         insuranceExpiryDate: formData.insuranceExpiryDate,
       });
 
-      toast.success('DISO Portal information saved successfully!');
+      toast.success('DISO Portal Information Saved Successfully!');
       setTimeout(() => navigate('/hr/employees'), 1500);
     } catch (error) {
       console.error('Failed to save DISO info:', error);
       console.error('Error response:', error.response);
       console.error('Error status:', error.response?.status);
       console.error('Error message:', error.response?.data?.message);
-      toast.error(error.response?.data?.message || 'Failed to save DISO information');
+      toast.error(error.response?.data?.message || 'Failed to Save DISO Information');
     } finally {
       setIsSubmitting(false);
     }
@@ -147,7 +155,12 @@ const DisoPortalInfo = () => {
             <div className="bg-white border border-neutral-300 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Building2 className="w-5 h-5 text-neutral-700" />
-                <h2 className="text-sm font-semibold text-neutral-900">Company Details</h2>
+                <h2 className="text-sm font-semibold text-neutral-900">
+                  Company Details
+                  {selectedCompany && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">(Auto-filled from selected company)</span>
+                  )}
+                </h2>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Input
@@ -156,6 +169,7 @@ const DisoPortalInfo = () => {
                   value={formData.companyName}
                   onChange={handleInputChange}
                   required
+                  disabled={!!selectedCompany}
                   placeholder="e.g. ABC Technologies LLC"
                 />
                 <Input
@@ -164,6 +178,7 @@ const DisoPortalInfo = () => {
                   value={formData.establishmentCardNumber}
                   onChange={handleInputChange}
                   required
+                  disabled={!!selectedCompany}
                   placeholder="e.g. EST-123456"
                 />
                 <Input
@@ -172,6 +187,7 @@ const DisoPortalInfo = () => {
                   value={formData.laborContractNumber}
                   onChange={handleInputChange}
                   required
+                  disabled={!!selectedCompany}
                   placeholder="e.g. LC-2025-001"
                 />
               </div>

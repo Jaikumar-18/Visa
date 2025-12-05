@@ -24,6 +24,9 @@ const UploadDocuments = () => {
   
   const [formData, setFormData] = useState({
     // Personal Details (filled by Employee)
+    gender: '',
+    maritalStatus: '',
+    qualification: '',
     motherName: '',
     motherNameArabic: '',
     religion: '',
@@ -71,6 +74,9 @@ const UploadDocuments = () => {
           // Pre-fill form with existing data only if fields are empty
           setFormData(prev => ({
             // Personal Details
+            gender: prev.gender || data.gender || '',
+            maritalStatus: prev.maritalStatus || data.marital_status || '',
+            qualification: prev.qualification || data.qualification || '',
             motherName: prev.motherName || data.mother_name || '',
             motherNameArabic: prev.motherNameArabic || data.mother_name_arabic || '',
             religion: prev.religion || data.religion || '',
@@ -100,7 +106,7 @@ const UploadDocuments = () => {
           }));
         } catch (error) {
           console.error('Failed to load employee:', error);
-          toast.error('Failed to load employee data');
+          toast.error('Failed to Load Employee Data');
         } finally {
           setIsLoading(false);
         }
@@ -487,12 +493,12 @@ const UploadDocuments = () => {
         setScanComplete(false);
         setIsScanning(false);
         setScanProgress(0);
-        toast.success('Passport data extracted! Please verify and complete remaining fields.');
+        toast.success('Passport Data Extracted Successfully! Please Verify and Complete Remaining Fields.');
       }, 1500);
       
     } catch (error) {
       console.error('OCR Error:', error);
-      toast.error('Failed to extract passport data. Please fill manually.');
+      toast.error('Failed to Extract Passport Data. Please Fill Manually.');
       setIsScanning(false);
       setScanProgress(0);
     }
@@ -536,6 +542,9 @@ const UploadDocuments = () => {
 
       // 2. Update employee details (mother name, religion, etc.)
       await updateEmployee(currentUser.employeeId, {
+        gender: formData.gender,
+        maritalStatus: formData.maritalStatus,
+        qualification: formData.qualification,
         motherName: formData.motherName,
         motherNameArabic: formData.motherNameArabic,
         religion: formData.religion,
@@ -596,7 +605,7 @@ const UploadDocuments = () => {
         currentUser.employeeId
       );
 
-      toast.success('Documents uploaded successfully!');
+      toast.success('Documents Uploaded Successfully!');
       
       // Force refresh all employee data
       refreshEmployees();
@@ -604,7 +613,7 @@ const UploadDocuments = () => {
       setTimeout(() => navigate('/employee/dashboard'), 1500);
     } catch (error) {
       console.error('Failed to submit documents:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload documents');
+      toast.error(error.response?.data?.message || 'Failed to Upload Documents');
     } finally {
       setIsLoading(false);
     }
@@ -652,6 +661,78 @@ const UploadDocuments = () => {
         {/* Step 1: Personal Information */}
         <Card title="Step 1: Personal Information" icon={FileText}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                Gender <span className="text-red-600">*</span>
+              </label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleInputChange}
+                required
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+              >
+                <option value="">Select</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                Marital Status <span className="text-red-600">*</span>
+              </label>
+              <select
+                name="maritalStatus"
+                value={formData.maritalStatus}
+                onChange={handleInputChange}
+                required
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+              >
+                <option value="">Select</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                Qualification <span className="text-red-600">*</span>
+              </label>
+              <select
+                name="qualification"
+                value={formData.qualification}
+                onChange={handleInputChange}
+                required
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+              >
+                <option value="">Select</option>
+                <option value="Graduate">Graduate</option>
+                <option value="Post Graduate">Post Graduate</option>
+                <option value="Diploma">Diploma</option>
+                <option value="High School">High School</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                Religion <span className="text-red-600">*</span>
+              </label>
+              <select
+                name="religion"
+                value={formData.religion}
+                onChange={handleInputChange}
+                required
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+              >
+                <option value="">Select</option>
+                <option value="Islam">Islam</option>
+                <option value="Christianity">Christianity</option>
+                <option value="Hinduism">Hinduism</option>
+                <option value="Buddhism">Buddhism</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
             <Input
               label="Mother's Name (English)"
               name="motherName"
@@ -669,25 +750,6 @@ const UploadDocuments = () => {
               labelDir="rtl"
             />
             
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Religion <span className="text-primary-600">*</span>
-              </label>
-              <select
-                name="religion"
-                value={formData.religion}
-                onChange={handleInputChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">Select</option>
-                <option value="Islam">Islam</option>
-                <option value="Christianity">Christianity</option>
-                <option value="Hinduism">Hinduism</option>
-                <option value="Buddhism">Buddhism</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
             <Input
               label="Faith"
               name="faith"
@@ -695,7 +757,6 @@ const UploadDocuments = () => {
               onChange={handleInputChange}
               placeholder="e.g. Sunni, Catholic"
             />
-            
             <Input
               label="Languages Known"
               name="languagesKnown"
@@ -703,15 +764,16 @@ const UploadDocuments = () => {
               onChange={handleInputChange}
               placeholder="e.g. English, Arabic, Hindi"
             />
+            
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
                 Do you want Dependents visa on hold?
               </label>
               <select
                 name="dependentsVisa"
                 value={formData.dependentsVisa}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
               >
                 <option value="">Select</option>
                 <option value="Yes">Yes</option>
@@ -889,15 +951,15 @@ const UploadDocuments = () => {
               placeholder="e.g. A12345678"
             />
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Passport Type <span className="text-primary-600">*</span>
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                Passport Type <span className="text-red-600">*</span>
               </label>
               <select
                 name="passportType"
                 value={formData.passportType}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
               >
                 <option value="">--None--</option>
                 <option value="Regular">Regular</option>
@@ -925,15 +987,15 @@ const UploadDocuments = () => {
             />
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Place of Issue Country <span className="text-primary-600">*</span>
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                Place of Issue Country <span className="text-red-600">*</span>
               </label>
               <select
                 name="placeOfIssueCountry"
                 value={formData.placeOfIssueCountry}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
               >
                 <option value="">--None--</option>
                 <option value="India">India</option>
@@ -981,15 +1043,15 @@ const UploadDocuments = () => {
             <div></div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Country of Birth <span className="text-primary-600">*</span>
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                Country of Birth <span className="text-red-600">*</span>
               </label>
               <select
                 name="countryOfBirth"
                 value={formData.countryOfBirth}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
               >
                 <option value="">--None--</option>
                 <option value="India">India</option>
@@ -1027,15 +1089,15 @@ const UploadDocuments = () => {
             />
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Present Nationality <span className="text-primary-600">*</span>
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
+                Present Nationality <span className="text-red-600">*</span>
               </label>
               <select
                 name="presentNationality"
                 value={formData.presentNationality}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
               >
                 <option value="">--None--</option>
                 <option value="Indian">Indian</option>
@@ -1047,14 +1109,14 @@ const UploadDocuments = () => {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
+              <label className="text-xs font-medium text-neutral-700 mb-1 block">
                 Previous Nationality
               </label>
               <select
                 name="previousNationality"
                 value={formData.previousNationality}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-2 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
               >
                 <option value="">--None--</option>
                 <option value="Indian">Indian</option>
