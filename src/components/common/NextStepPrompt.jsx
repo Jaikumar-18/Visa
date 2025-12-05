@@ -8,43 +8,50 @@ const NextStepPrompt = ({ employee, userRole }) => {
 
   const getNextStep = () => {
     if (userRole === 'hr') {
-      // HR next steps
-      if (employee.preArrival?.documentsUploaded && !employee.preArrival?.hrReviewed) {
+      // HR next steps (using flattened fields)
+      if (employee.documents_uploaded && !employee.hr_reviewed) {
         return {
           label: 'Review Documents',
           path: `/hr/review/${employee.id}`,
           message: 'Employee has uploaded documents',
         };
       }
-      if (employee.inCountry?.arrivalUpdated && !employee.inCountry?.medicalAppointment?.status) {
+      if (employee.hr_reviewed && !employee.diso_info_completed) {
+        return {
+          label: 'Fill DISO Info',
+          path: `/hr/diso-info/${employee.id}`,
+          message: 'Complete DISO portal information',
+        };
+      }
+      if (employee.arrival_updated && !employee.medical_appointment_scheduled) {
         return {
           label: 'Book Medical Appointment',
           path: `/hr/book-medical/${employee.id}`,
           message: 'Employee has arrived in UAE',
         };
       }
-      if (employee.inCountry?.biometricConfirmed && !employee.inCountry?.residenceVisaSubmitted) {
+      if (employee.biometric_confirmed && !employee.residence_visa_submitted) {
         return {
           label: 'Submit Residence Visa',
           path: `/hr/submit-visa/${employee.id}`,
           message: 'Ready to submit residence visa',
         };
       }
-      if (employee.inCountry?.residenceVisaSubmitted && !employee.finalization?.contractInitiated) {
+      if (employee.residence_visa_submitted && !employee.contract_initiated) {
         return {
           label: 'Create Contract',
           path: `/hr/initiate-contract/${employee.id}`,
           message: 'Visa submitted, create employment contract',
         };
       }
-      if (employee.finalization?.contractSigned && !employee.finalization?.mohreSubmitted) {
+      if (employee.contract_signed && !employee.mohre_submitted) {
         return {
           label: 'Submit to MOHRE',
           path: `/hr/mohre-submission/${employee.id}`,
           message: 'Contract signed, submit to MOHRE',
         };
       }
-      if (employee.finalization?.mohreApproved && !employee.finalization?.visaReceived) {
+      if (employee.mohre_approved && !employee.visa_received) {
         return {
           label: 'Apply for Visa',
           path: `/hr/visa-application/${employee.id}`,
@@ -52,50 +59,50 @@ const NextStepPrompt = ({ employee, userRole }) => {
         };
       }
     } else {
-      // Employee next steps
-      if (!employee.preArrival?.documentsUploaded) {
+      // Employee next steps (using flattened fields)
+      if (!employee.documents_uploaded) {
         return {
           label: 'Upload Documents',
           path: '/employee/upload-documents',
           message: 'Upload your documents to continue',
         };
       }
-      if (employee.preArrival?.disoInfoCompleted && !employee.preArrival?.entryPermitGenerated) {
+      if (employee.diso_info_completed && !employee.entry_permit_generated) {
         return {
           label: 'Download Entry Permit',
           path: '/employee/entry-permit',
           message: 'Your entry permit is ready',
         };
       }
-      if (employee.preArrival?.entryPermitGenerated && !employee.inCountry?.arrivalUpdated) {
+      if (employee.entry_permit_generated && !employee.arrival_updated) {
         return {
           label: 'Update Arrival',
           path: '/employee/update-arrival',
           message: 'Update your arrival information',
         };
       }
-      if (employee.inCountry?.medicalAppointment?.status === 'scheduled' && !employee.inCountry?.medicalCertificate) {
+      if (employee.medical_appointment_scheduled && !employee.medical_certificate_uploaded) {
         return {
           label: 'Upload Medical Certificate',
           path: '/employee/medical-certificate',
           message: 'Medical appointment scheduled',
         };
       }
-      if (employee.inCountry?.medicalCertificate && !employee.inCountry?.biometricConfirmed) {
+      if (employee.medical_certificate_uploaded && !employee.biometric_confirmed) {
         return {
           label: 'Confirm Biometric',
           path: '/employee/biometric-confirmation',
           message: 'Confirm your biometric submission',
         };
       }
-      if (employee.finalization?.contractInitiated && !employee.finalization?.contractSigned) {
+      if (employee.contract_initiated && !employee.contract_signed) {
         return {
           label: 'Sign Contract',
           path: '/employee/sign-contract',
           message: 'Your contract is ready for signature',
         };
       }
-      if (employee.finalization?.visaReceived && !employee.finalization?.stampedVisaUploaded) {
+      if (employee.visa_received && !employee.stamped_visa_uploaded) {
         return {
           label: 'Upload Stamped Visa',
           path: '/employee/upload-stamped-visa',

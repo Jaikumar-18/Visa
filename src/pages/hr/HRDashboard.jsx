@@ -1,30 +1,63 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Users, Clock, CheckCircle, FileText, Bell, UserPlus, TrendingUp, Calendar, Eye } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 
 const HRDashboard = () => {
   const navigate = useNavigate();
   const { employees, refreshEmployees, getHRNotifications } = useData();
+  const [notifications, setNotifications] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Auto-refresh every 3 seconds to check for updates
+  // Force refresh on mount
+  useEffect(() => {
+    console.log('HRDashboard mounted - forcing refresh');
+    refreshEmployees();
+  }, []);
+
+  // Load notifications
+  useEffect(() => {
+    getHRNotifications().then(notifs => {
+      setNotifications(notifs || []);
+    });
+  }, [getHRNotifications]);
+
+  // Auto-refresh every 30 seconds to check for updates
   useEffect(() => {
     const interval = setInterval(() => {
       refreshEmployees();
-    }, 3000);
+      getHRNotifications().then(notifs => {
+        setNotifications(notifs || []);
+      });
+    }, 30000); // Changed from 3000ms to 30000ms (30 seconds)
 
     return () => clearInterval(interval);
-  }, [refreshEmployees]);
+  }, [refreshEmployees, getHRNotifications]);
+
+  // Reload data when page becomes visible (e.g., after navigation back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('HR Dashboard visible - reloading data');
+        refreshEmployees();
+        getHRNotifications().then(notifs => {
+          setNotifications(notifs || []);
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [refreshEmployees, getHRNotifications]);
 
   const stats = {
     total: employees.length,
-    preArrival: employees.filter(e => e.currentStage === 'pre-arrival').length,
-    inCountry: employees.filter(e => e.currentStage === 'in-country').length,
-    completed: employees.filter(e => e.currentStage === 'completed').length,
+    preArrival: employees.filter(e => e.current_stage === 'pre-arrival').length,
+    inCountry: employees.filter(e => e.current_stage === 'in-country').length,
+    completed: employees.filter(e => e.current_stage === 'completed').length,
   };
 
-  const notifications = getHRNotifications();
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
 
   return (
     <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
@@ -35,6 +68,21 @@ const HRDashboard = () => {
             <h1 className="text-2xl font-semibold text-neutral-900">HR Dashboard</h1>
             <p className="text-sm text-neutral-600">Manage visa requests and applications</p>
           </div>
+          <button
+            onClick={async () => {
+              setIsRefreshing(true);
+              await refreshEmployees();
+              await getHRNotifications().then(notifs => setNotifications(notifs || []));
+              setIsRefreshing(false);
+            }}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors disabled:opacity-50"
+          >
+            <svg className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="text-sm font-medium">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
         </div>
     
         {/* Stats Grid */}
@@ -142,23 +190,27 @@ const HRDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-200">
-                    {employees.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5).map((employee) => (
+                    {employees.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5).map((employee) => {
+                      const fullName = `${employee.first_name || ''} ${employee.last_name || ''}`.trim();
+                      const initials = `${employee.first_name?.[0] || ''}${employee.last_name?.[0] || ''}`.toUpperCase();
+                      
+                      return (
                       <tr key={employee.id} className="hover:bg-neutral-50 transition-colors cursor-pointer" onClick={() => navigate(`/hr/employee/${employee.id}`)}>
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
-                              <span className="text-xs font-semibold text-neutral-700">{employee.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}</span>
+                              <span className="text-xs font-semibold text-neutral-700">{initials}</span>
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-neutral-900">{employee.name}</p>
+                              <p className="text-sm font-medium text-neutral-900">{fullName}</p>
                               <p className="text-xs text-neutral-500">{employee.department}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-2.5"><p className="text-sm text-neutral-700">{employee.jobTitle}</p></td>
+                        <td className="px-4 py-2.5"><p className="text-sm text-neutral-700">{employee.job_title}</p></td>
                         <td className="px-4 py-2.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${employee.currentStage === 'completed' ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-700'}`}>
-                            {employee.currentStage === 'pre-arrival' ? 'Pre-Arrival' : employee.currentStage === 'in-country' ? 'In-Country' : 'Completed'}
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${employee.current_stage === 'completed' ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-700'}`}>
+                            {employee.current_stage === 'pre-arrival' ? 'Pre-Arrival' : employee.current_stage === 'in-country' ? 'In-Country' : 'Completed'}
                           </span>
                         </td>
                         <td className="px-4 py-2.5 text-right">
@@ -168,7 +220,8 @@ const HRDashboard = () => {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>

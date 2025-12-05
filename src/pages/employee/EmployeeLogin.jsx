@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IdCardLanyard } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { storage } from '../../utils/storage';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import toast, { Toaster } from 'react-hot-toast';
@@ -10,28 +9,24 @@ import toast, { Toaster } from 'react-hot-toast';
 const EmployeeLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const employees = storage.getEmployees();
-    const employee = employees.find(
-      emp => emp.email === email && emp.password === password
-    );
+    setIsLoading(true);
     
-    if (employee) {
-      login({ 
-        role: 'employee', 
-        name: employee.name, 
-        email: employee.email,
-        id: employee.id 
-      });
+    const result = await login(email, password);
+    
+    if (result.success) {
       toast.success('Login successful!');
       setTimeout(() => navigate('/employee/dashboard'), 500);
     } else {
-      toast.error('Invalid credentials');
+      toast.error(result.message || 'Invalid credentials');
     }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -67,8 +62,8 @@ const EmployeeLogin = () => {
             />
 
             <div className="pt-2">
-              <Button type="submit" variant="success" className="w-full">
-                Login
+              <Button type="submit" variant="success" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Logging in...' : 'Login'}
               </Button>
             </div>
           </form>

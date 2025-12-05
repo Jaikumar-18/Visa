@@ -5,50 +5,80 @@ import { Bell, CheckCircle, Info, AlertCircle, Trash2, Filter } from 'lucide-rea
 
 const Notifications = () => {
   const { currentUser } = useAuth();
-  const { getEmployee, updateEmployee } = useData();
-  const employee = getEmployee(currentUser.id);
+  const { getEmployee, getEmployeeNotifications, markAllNotificationsAsRead, deleteNotification: deleteNotif, clearAllNotifications } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState('all');
   const [filterRead, setFilterRead] = useState('all');
 
-  // Mark all notifications as read when page opens
+  // Load employee and notifications
   useEffect(() => {
-    if (employee && employee.notifications && employee.notifications.length > 0) {
-      const hasUnread = employee.notifications.some(n => !n.read);
-      
-      if (hasUnread) {
-        const updatedNotifications = employee.notifications.map(notif => ({
-          ...notif,
-          read: true,
-        }));
-
-        updateEmployee(currentUser.id, {
-          notifications: updatedNotifications,
-        });
+    const loadData = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const empData = await getEmployee(currentUser.employeeId);
+          setEmployee(empData);
+          
+          const notifs = await getEmployeeNotifications(currentUser.employeeId);
+          console.log('Notifications loaded:', notifs);
+          setNotifications(notifs);
+        } catch (error) {
+          console.error('Failed to load notifications:', error);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }
-  }, [employee?.id, currentUser.id, updateEmployee]);
+    };
+    loadData();
+  }, [currentUser?.employeeId, getEmployee, getEmployeeNotifications]);
 
-  if (!employee) {
-    return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading notifications...</p>
+        </div>
+      </div>
+    );
   }
 
-  const deleteNotification = (notifId) => {
-    const updatedNotifications = employee.notifications.filter(n => n.id !== notifId);
-    updateEmployee(currentUser.id, {
-      notifications: updatedNotifications,
-    });
+  if (!employee) {
+    return <div>Employee not found</div>;
+  }
+
+  const handleDeleteNotification = async (notifId) => {
+    try {
+      await deleteNotif(notifId, false);
+      setNotifications(notifications.filter(n => n.id !== notifId));
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+    }
   };
 
-  const deleteAllNotifications = () => {
+  const handleDeleteAllNotifications = async () => {
     if (window.confirm('Are you sure you want to delete all notifications?')) {
-      updateEmployee(currentUser.id, {
-        notifications: [],
-      });
+      try {
+        await clearAllNotifications(currentUser.employeeId, false);
+        setNotifications([]);
+      } catch (error) {
+        console.error('Failed to clear notifications:', error);
+      }
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead(currentUser.employeeId, false);
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
     }
   };
 
   // Filter notifications
-  const filteredNotifications = (employee.notifications || []).filter(notif => {
+  const filteredNotifications = (notifications || []).filter(notif => {
     const matchesType = filterType === 'all' || notif.type === filterType;
     const matchesRead = filterRead === 'all' || 
                        (filterRead === 'unread' && !notif.read) ||
@@ -87,19 +117,30 @@ const Notifications = () => {
             <h1 className="text-2xl font-semibold text-neutral-900">Notifications</h1>
             <p className="text-sm text-neutral-600">All your visa application updates</p>
           </div>
-          {employee.notifications && employee.notifications.length > 0 && (
-            <button
-              onClick={deleteAllNotifications}
-              className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 border border-red-300 rounded-lg font-medium flex items-center gap-1.5 transition-colors"
-            >
-              <Trash2 size={14} />
-              Clear All
-            </button>
-          )}
+          <div className="flex gap-2">
+            {notifications && notifications.length > 0 && notifications.some(n => !n.read) && (
+              <button
+                onClick={handleMarkAllAsRead}
+                className="px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 border border-blue-300 rounded-lg font-medium flex items-center gap-1.5 transition-colors"
+              >
+                <CheckCircle size={14} />
+                Mark All Read
+              </button>
+            )}
+            {notifications && notifications.length > 0 && (
+              <button
+                onClick={handleDeleteAllNotifications}
+                className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 border border-red-300 rounded-lg font-medium flex items-center gap-1.5 transition-colors"
+              >
+                <Trash2 size={14} />
+                Clear All
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
-        {employee.notifications && employee.notifications.length > 0 && (
+        {notifications && notifications.length > 0 && (
           <div className="bg-white border border-neutral-300 rounded-lg p-3 mb-3">
             <div className="flex flex-wrap gap-3 items-center">
               <div className="flex items-center gap-2">
@@ -129,7 +170,7 @@ const Notifications = () => {
               </select>
 
               <span className="ml-auto text-xs text-neutral-600 font-medium">
-                {filteredNotifications.length} of {employee.notifications.length} notifications
+                {filteredNotifications.length} of {notifications.length} notifications
               </span>
             </div>
           </div>
@@ -158,7 +199,7 @@ const Notifications = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteNotification(notif.id);
+                              handleDeleteNotification(notif.id);
                             }}
                             className="text-neutral-400 hover:text-red-600 transition-colors"
                             title="Delete notification"
@@ -168,7 +209,7 @@ const Notifications = () => {
                         </div>
                       </div>
                       <p className="text-xs text-neutral-500 mt-1">
-                        {new Date(notif.date).toLocaleString()}
+                        {new Date(notif.created_at).toLocaleString()}
                       </p>
                     </div>
                   </div>

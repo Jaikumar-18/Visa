@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, CheckCircle, Download } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -11,41 +11,79 @@ import toast from 'react-hot-toast';
 const UploadStampedVisa = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { getEmployee, updateEmployee, addNotification } = useData();
-  const employee = getEmployee(currentUser.id);
+  const { getEmployee, uploadDocument, workflow, addNotification } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [stampedVisa, setStampedVisa] = useState(null);
 
-  if (!employee) {
-    return <div>Loading...</div>;
+  useEffect(() => {
+    const loadEmployee = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const data = await getEmployee(currentUser.employeeId);
+          setEmployee(data);
+        } catch (error) {
+          console.error('Failed to load employee:', error);
+          toast.error('Failed to load employee data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadEmployee();
+  }, [currentUser?.employeeId, getEmployee]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleSubmit = (e) => {
+  if (!employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee data not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     if (!stampedVisa) {
       toast.error('Please upload stamped visa');
+      setIsSubmitting(false);
       return;
     }
 
-    updateEmployee(currentUser.id, {
-      finalization: {
-        ...employee.finalization,
-        stampedVisaUploaded: true,
-        stampedVisaFile: stampedVisa,
-        stampedVisaUploadedAt: new Date().toISOString(),
-      },
-      currentStage: 'completed',
-      status: 'completed',
-    });
+    try {
+      const stampedVisaFile = await fetch(stampedVisa).then(r => r.blob()).then(blob => new File([blob], 'stamped_visa.pdf', { type: blob.type }));
+      await uploadDocument(stampedVisaFile, currentUser.employeeId, 'stamped_visa');
+      await workflow.uploadStampedVisa(currentUser.employeeId);
 
-    addNotification(
-      currentUser.id,
-      'Congratulations! Your visa process is complete.',
-      'success'
-    );
+      await addNotification(
+        currentUser.employeeId,
+        'Congratulations! Your visa process is complete.',
+        'success'
+      );
 
-    toast.success('Process Complete! Welcome to UAE!');
-    setTimeout(() => navigate('/employee/dashboard'), 2000);
+      toast.success('Process Complete! Welcome to UAE!');
+      setTimeout(() => navigate('/employee/dashboard'), 2000);
+    } catch (error) {
+      console.error('Failed to upload stamped visa:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload stamped visa');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const workflowSteps = [
@@ -150,8 +188,8 @@ const UploadStampedVisa = () => {
               <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')}>
                 Upload Later
               </Button>
-              <Button type="submit" variant="success" icon={CheckCircle}>
-                Complete Process
+              <Button type="submit" variant="success" icon={CheckCircle} disabled={isSubmitting}>
+                {isSubmitting ? 'Uploading...' : 'Complete Process'}
               </Button>
             </div>
           </form>

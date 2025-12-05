@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plane, MapPin } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -11,8 +11,27 @@ import toast from 'react-hot-toast';
 const UpdateArrival = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { getEmployee, updateEmployee, addHRNotification } = useData();
-  const employee = getEmployee(currentUser.id);
+  const { getEmployee, workflow, addHRNotification } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadEmployee = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const data = await getEmployee(currentUser.employeeId);
+          setEmployee(data);
+        } catch (error) {
+          console.error('Failed to load employee:', error);
+          toast.error('Failed to load employee data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadEmployee();
+  }, [currentUser?.employeeId, getEmployee]);
 
   const [formData, setFormData] = useState({
     arrivalDate: '',
@@ -30,30 +49,35 @@ const UpdateArrival = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    updateEmployee(currentUser.id, {
-      inCountry: {
-        ...employee.inCountry,
-        arrivalUpdated: true,
+    try {
+      await workflow.updateArrival(currentUser.employeeId, {
         arrivalDate: formData.arrivalDate,
-        arrivalDetails: formData,
-        arrivalUpdatedAt: new Date().toISOString(),
-      },
-      currentStage: 'in-country',
-      status: 'arrived',
-    });
+        portOfEntry: formData.portOfEntry,
+        flightNumber: formData.flightNumber,
+        currentLocation: formData.currentLocation,
+        hotelName: formData.hotelName,
+        contactNumberUAE: formData.contactNumberUAE,
+      });
 
-    // Notify HR
-    addHRNotification(
-      `${employee.name} (${employee.jobTitle}) has arrived in UAE on ${formData.arrivalDate}. Medical appointment needs to be scheduled.`,
-      'info',
-      currentUser.id
-    );
+      // Notify HR
+      await addHRNotification(
+        `${employee.first_name} ${employee.last_name} (${employee.job_title}) has arrived in UAE on ${formData.arrivalDate}. Medical appointment needs to be scheduled.`,
+        'info',
+        currentUser.employeeId
+      );
 
-    toast.success('Arrival information updated successfully!');
-    setTimeout(() => navigate('/employee/dashboard'), 1000);
+      toast.success('Arrival information updated successfully!');
+      setTimeout(() => navigate('/employee/dashboard'), 1500);
+    } catch (error) {
+      console.error('Failed to update arrival:', error);
+      toast.error(error.response?.data?.message || 'Failed to update arrival information');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const workflowSteps = [
@@ -66,6 +90,27 @@ const UpdateArrival = () => {
     { label: 'MOHRE & Visa' },
     { label: 'Upload Stamped Visa' },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee data not found</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
@@ -162,11 +207,11 @@ const UpdateArrival = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')}>
+              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
-                Confirm Arrival
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : 'Confirm Arrival'}
               </Button>
             </div>
           </form>

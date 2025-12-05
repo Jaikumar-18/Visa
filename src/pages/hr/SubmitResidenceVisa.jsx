@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FileCheck, Send } from 'lucide-react';
 import { useData } from '../../context/DataContext';
@@ -8,51 +8,78 @@ import toast from 'react-hot-toast';
 const SubmitResidenceVisa = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { getEmployee, updateEmployee, addNotification } = useData();
-  const employee = getEmployee(parseInt(id));
+  const { getEmployee, workflow, addNotification } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!employee) {
-    return <div>Employee not found</div>;
+  useEffect(() => {
+    const loadEmployee = async () => {
+      try {
+        const data = await getEmployee(parseInt(id));
+        setEmployee(data);
+      } catch (error) {
+        console.error('Failed to load employee:', error);
+        toast.error('Failed to load employee data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadEmployee();
+  }, [id, getEmployee]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleSubmit = () => {
+  if (!employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
-    // Simulate submission delay
-    setTimeout(() => {
-      updateEmployee(employee.id, {
-        inCountry: {
-          ...employee.inCountry,
-          residenceVisaSubmitted: true,
-          residenceVisaSubmittedAt: new Date().toISOString(),
-          residenceVisaStatus: 'processing',
-        },
-      });
+    try {
+      await workflow.submitResidenceVisa(employee.id);
 
       // Notify employee
-      addNotification(
+      await addNotification(
         employee.id,
         'Your Residence Visa and Emirates ID application has been submitted. Processing in progress.',
         'info'
       );
 
       toast.success('Residence Visa application submitted successfully!');
+      setTimeout(() => navigate('/hr/employees'), 1500);
+    } catch (error) {
+      console.error('Failed to submit visa:', error);
+      toast.error(error.response?.data?.message || 'Failed to submit residence visa');
+    } finally {
       setIsSubmitting(false);
-      setTimeout(() => navigate('/hr/employees'), 1000);
-    }, 2000);
+    }
   };
 
   const documents = [
-    { name: 'Passport Copy', status: employee.documents?.passport?.status },
-    { name: 'Passport Photo', status: employee.documents?.photo?.status },
-    { name: 'Medical Certificate', status: employee.inCountry?.medicalCertificate ? 'completed' : 'pending' },
-    { name: 'Biometric Confirmation', status: employee.inCountry?.biometricConfirmed ? 'completed' : 'pending' },
+    { name: 'Passport Copy', status: employee.documents_uploaded ? 'completed' : 'pending' },
+    { name: 'Passport Photo', status: employee.documents_uploaded ? 'completed' : 'pending' },
+    { name: 'Medical Certificate', status: employee.medical_certificate_uploaded ? 'completed' : 'pending' },
+    { name: 'Biometric Confirmation', status: employee.biometric_confirmed ? 'completed' : 'pending' },
   ];
 
-  const allDocumentsReady = documents.every(doc => 
-    doc.status === 'approved' || doc.status === 'completed'
-  );
+  const allDocumentsReady = documents.every(doc => doc.status === 'completed');
 
   return (
     <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
@@ -75,19 +102,19 @@ const SubmitResidenceVisa = () => {
             <div className="grid grid-cols-4 gap-3">
               <div>
                 <p className="text-xs text-neutral-500">Name</p>
-                <p className="text-xs font-medium text-neutral-900">{employee.name}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.first_name} {employee.last_name}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Passport Number</p>
-                <p className="text-xs font-medium text-neutral-900">{employee.passportNumber}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.passport_number}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Nationality</p>
-                <p className="text-xs font-medium text-neutral-900">{employee.nationality}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.present_nationality}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Visa Type</p>
-                <p className="text-xs font-medium text-neutral-900">{employee.visaType}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.visa_type}</p>
               </div>
             </div>
           </div>

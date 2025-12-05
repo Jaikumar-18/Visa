@@ -9,8 +9,10 @@ import toast from 'react-hot-toast';
 const DisoPortalInfo = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { getEmployee, updateEmployee } = useData();
-  const employee = getEmployee(parseInt(id));
+  const { getEmployee, workflow } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -28,18 +30,17 @@ const DisoPortalInfo = () => {
   });
 
   useEffect(() => {
-    // Only load data once when component mounts or employee ID changes
-    if (employee && employee.id) {
-      // Auto-fill from employee data if disoPortalInfo doesn't exist
-      if (employee.disoPortalInfo) {
-        setFormData(employee.disoPortalInfo);
-      } else {
-        // Pre-fill with data from CreateEmployee
+    const loadEmployee = async () => {
+      try {
+        const data = await getEmployee(parseInt(id));
+        setEmployee(data);
+        
+        // Pre-fill with data from employee
         setFormData({
-          companyName: employee.companyName || '', // Auto-fill from CreateEmployee
-          establishmentCardNumber: employee.establishmentCardNumber || '', // Auto-fill from CreateEmployee
-          laborContractNumber: employee.laborContractNumber || '', // Auto-fill from CreateEmployee
-          basicSalary: employee.salary || '', // Auto-fill from CreateEmployee
+          companyName: data.company_name || '',
+          establishmentCardNumber: data.establishment_card_number || '',
+          laborContractNumber: data.labor_contract_number || '',
+          basicSalary: data.salary || '',
           housingAllowance: '',
           transportAllowance: '',
           otherAllowances: '',
@@ -49,12 +50,35 @@ const DisoPortalInfo = () => {
           insurancePolicyNumber: '',
           insuranceExpiryDate: '',
         });
+      } catch (error) {
+        console.error('Failed to load employee:', error);
+        toast.error('Failed to load employee data');
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, [employee?.id]); // Only run when employee ID changes
+    };
+    loadEmployee();
+  }, [id, getEmployee]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!employee) {
-    return <div>Employee not found</div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee not found</p>
+        </div>
+      </div>
+    );
   }
 
   const handleInputChange = (e) => {
@@ -64,20 +88,43 @@ const DisoPortalInfo = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    updateEmployee(employee.id, {
-      disoPortalInfo: formData,
-      preArrival: {
-        ...employee.preArrival,
-        disoInfoCompleted: true,
-        disoInfoCompletedAt: new Date().toISOString(),
-      },
-    });
+    try {
+      // Debug: Check token and user info
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      console.log('Token exists:', !!token);
+      console.log('User data:', user ? JSON.parse(user) : null);
+      
+      await workflow.submitDISO(employee.id, {
+        companyName: formData.companyName,
+        establishmentCardNumber: formData.establishmentCardNumber,
+        laborContractNumber: formData.laborContractNumber,
+        basicSalary: formData.basicSalary,
+        housingAllowance: formData.housingAllowance,
+        transportAllowance: formData.transportAllowance,
+        otherAllowances: formData.otherAllowances,
+        accommodationType: formData.accommodationType,
+        accommodationAddress: formData.accommodationAddress,
+        insuranceProvider: formData.insuranceProvider,
+        insurancePolicyNumber: formData.insurancePolicyNumber,
+        insuranceExpiryDate: formData.insuranceExpiryDate,
+      });
 
-    toast.success('DISO Portal information saved successfully!');
-    setTimeout(() => navigate('/hr/employees'), 1000);
+      toast.success('DISO Portal information saved successfully!');
+      setTimeout(() => navigate('/hr/employees'), 1500);
+    } catch (error) {
+      console.error('Failed to save DISO info:', error);
+      console.error('Error response:', error.response);
+      console.error('Error status:', error.response?.status);
+      console.error('Error message:', error.response?.data?.message);
+      toast.error(error.response?.data?.message || 'Failed to save DISO information');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -88,7 +135,7 @@ const DisoPortalInfo = () => {
           <div>
             <h1 className="text-2xl font-semibold text-neutral-900">DISO Portal Information</h1>
             <p className="text-sm text-neutral-600">
-              Fill additional information as per DISO Portal requirements for {employee.name}
+              Fill additional information as per DISO Portal requirements for {employee.first_name} {employee.last_name}
             </p>
           </div>
         </div>
@@ -240,11 +287,11 @@ const DisoPortalInfo = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <Button type="button" variant="secondary" onClick={() => navigate('/hr/employees')}>
+              <Button type="button" variant="secondary" onClick={() => navigate('/hr/employees')} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
-                Save DISO Information
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save DISO Information'}
               </Button>
             </div>
           </form>

@@ -8,27 +8,48 @@ import { useData } from '../../context/DataContext';
 const Header = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { getEmployee, getHRNotifications, refreshEmployees } = useData();
+  const { getEmployee, getHRNotifications, getEmployeeNotifications, refreshEmployees } = useData();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [hrNotifications, setHrNotifications] = useState([]);
+  const [employeeNotifications, setEmployeeNotifications] = useState([]);
   const dropdownRef = useRef(null);
   
-  const employee = currentUser?.role === 'employee' ? getEmployee(currentUser.id) : null;
-  const hrNotifications = currentUser?.role === 'hr' ? getHRNotifications() : [];
-  
   const notifications = currentUser?.role === 'employee' 
-    ? (employee?.notifications || [])
+    ? employeeNotifications
     : hrNotifications;
   
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const recentNotifications = notifications.slice(0, 5); // Show only 5 most recent
+  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
+  const recentNotifications = Array.isArray(notifications) ? notifications.slice(0, 5) : [];
 
-  // Auto-refresh notifications every 5 seconds
+  // Load notifications
+  useEffect(() => {
+    if (currentUser?.role === 'hr') {
+      getHRNotifications().then(notifs => {
+        setHrNotifications(notifs || []);
+      });
+    } else if (currentUser?.role === 'employee' && currentUser?.employeeId) {
+      getEmployeeNotifications(currentUser.employeeId).then(notifs => {
+        setEmployeeNotifications(notifs || []);
+      });
+    }
+  }, [currentUser, getHRNotifications, getEmployeeNotifications]);
+
+  // Auto-refresh notifications every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       refreshEmployees();
-    }, 5000);
+      if (currentUser?.role === 'hr') {
+        getHRNotifications().then(notifs => {
+          setHrNotifications(notifs || []);
+        });
+      } else if (currentUser?.role === 'employee' && currentUser?.employeeId) {
+        getEmployeeNotifications(currentUser.employeeId).then(notifs => {
+          setEmployeeNotifications(notifs || []);
+        });
+      }
+    }, 30000); // Changed from 5000ms to 30000ms (30 seconds)
     return () => clearInterval(interval);
-  }, [refreshEmployees]);
+  }, [refreshEmployees, currentUser, getHRNotifications, getEmployeeNotifications]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -115,7 +136,7 @@ const Header = () => {
                             <div className="flex-1 min-w-0">
                               <p className="text-xs text-neutral-900 line-clamp-2">{notif.message}</p>
                               <p className="text-xs text-neutral-500 mt-1">
-                                {new Date(notif.date).toLocaleString('en-US', {
+                                {new Date(notif.created_at || notif.date).toLocaleString('en-US', {
                                   month: 'short',
                                   day: 'numeric',
                                   hour: '2-digit',

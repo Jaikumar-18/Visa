@@ -5,18 +5,33 @@ import { Bell, CheckCircle, Info, AlertCircle, User, Trash2, Filter } from 'luci
 
 const HRNotifications = () => {
   const navigate = useNavigate();
-  const { getHRNotifications, markHRNotificationsAsRead, getEmployee, deleteHRNotification, clearAllHRNotifications } = useData();
-  const notifications = getHRNotifications();
+  const { getHRNotifications, markAllNotificationsAsRead, getEmployee, deleteNotification, clearAllNotifications } = useData();
+  const [notifications, setNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const notifs = await getHRNotifications();
+        setNotifications(notifs);
+      } catch (error) {
+        console.error('Failed to load notifications:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadNotifications();
+  }, [getHRNotifications]);
   const [filterType, setFilterType] = useState('all');
   const [filterRead, setFilterRead] = useState('all');
 
   // Mark all as read when page opens
   useEffect(() => {
     const hasUnread = notifications.some(n => !n.read);
-    if (hasUnread) {
-      markHRNotificationsAsRead();
+    if (hasUnread && notifications.length > 0) {
+      markAllNotificationsAsRead(null, true);
     }
-  }, []);
+  }, [notifications.length]);
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -62,7 +77,8 @@ const HRNotifications = () => {
             <button
               onClick={() => {
                 if (window.confirm('Are you sure you want to delete all notifications?')) {
-                  clearAllHRNotifications();
+                  clearAllNotifications(null, true);
+                  setNotifications([]);
                 }
               }}
               className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 border border-red-300 rounded-lg font-medium flex items-center gap-1.5 transition-colors"
@@ -135,7 +151,7 @@ const HRNotifications = () => {
                               <div className="flex items-center gap-1.5 mt-1.5">
                                 <User size={12} className="text-neutral-500 flex-shrink-0" />
                                 <span className="text-xs text-neutral-600 font-medium truncate">
-                                  {employee.name} - {employee.jobTitle}
+                                  {employee.first_name} {employee.last_name} - {employee.job_title}
                                 </span>
                               </div>
                             )}
@@ -147,7 +163,8 @@ const HRNotifications = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteHRNotification(notif.id);
+                                deleteNotification(notif.id, true);
+                                setNotifications(notifications.filter(n => n.id !== notif.id));
                               }}
                               className="text-neutral-400 hover:text-red-600 transition-colors"
                               title="Delete notification"

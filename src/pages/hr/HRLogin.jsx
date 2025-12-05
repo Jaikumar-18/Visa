@@ -2,28 +2,31 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { storage } from '../../utils/storage';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import toast, { Toaster } from 'react-hot-toast';
 
 const HRLogin = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const hrUser = storage.getHRUser();
+    setIsLoading(true);
     
-    if (username === hrUser.username && password === hrUser.password) {
-      login({ role: 'hr', name: hrUser.name, username: hrUser.username });
+    const result = await login(email, password);
+    
+    if (result.success) {
       toast.success('Login successful!');
       setTimeout(() => navigate('/hr/dashboard'), 500);
     } else {
-      toast.error('Invalid credentials');
+      toast.error(result.message || 'Invalid credentials');
     }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -41,11 +44,11 @@ const HRLogin = () => {
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <Input
-              label="Username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter username"
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter email"
               required
             />
 
@@ -59,8 +62,8 @@ const HRLogin = () => {
             />
 
             <div className="pt-2">
-              <Button type="submit" variant="primary" className="w-full">
-                Login
+              <Button type="submit" variant="primary" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Logging in...' : 'Login'}
               </Button>
             </div>
           </form>
@@ -68,8 +71,8 @@ const HRLogin = () => {
           <div className="mt-4 p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
             <p className="text-xs text-neutral-600 text-center">
               Demo Credentials:<br />
-              <span className="font-medium">Username: admin</span><br />
-              <span className="font-medium">Password: admin</span>
+              <span className="font-medium">Email: hr@visaportal.com</span><br />
+              <span className="font-medium">Password: admin123</span>
             </p>
           </div>
 

@@ -71,9 +71,10 @@ const transliterateToEnglish = (text) => {
 
 const CreateEmployee = () => {
   const navigate = useNavigate();
-  const { addEmployee, addNotification } = useData();
+  const { addEmployee } = useData();
   const [step, setStep] = useState(1); // 1: Terms, 2: Form
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     // Basic Info (filled by HR)
@@ -135,56 +136,33 @@ const CreateEmployee = () => {
     setStep(2);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    // Generate password
-    const password = 'emp' + Math.random().toString(36).slice(-6);
-    
-    // Create employee object
-    const newEmployee = {
-      ...formData,
-      name: `${formData.firstName} ${formData.middleName || ''} ${formData.lastName}`.replace(/\s+/g, ' ').trim(),
-      password,
-      currentStage: STAGES.PRE_ARRIVAL,
-      status: 'pending-documents',
-      preArrival: {
-        termsAcceptedByHR: true,
-        termsAcceptedAt: new Date().toISOString(),
-        documentsUploaded: false,
-        hrReviewed: false,
-        entryPermitGenerated: false,
-      },
-      inCountry: {
-        arrivalUpdated: false,
-        medicalAppointment: {},
-        biometricConfirmed: false,
-      },
-      finalization: {
-        contractInitiated: false,
-        contractSigned: false,
-        mohreApproved: false,
-        visaReceived: false,
-      },
-      notifications: [],
-      documents: {},
-    };
-
-    // Add employee
-    const created = addEmployee(newEmployee);
-    
-    // Add notification to employee
-    addNotification(
-      created.id,
-      `Welcome! Your account has been created. Login with email: ${created.email} and password: ${password}`,
-      'success'
-    );
-
-    toast.success(`Employee created! Password: ${password}`);
-    
-    setTimeout(() => {
-      navigate('/hr/employees');
-    }, 2000);
+    try {
+      // Create employee via API
+      const result = await addEmployee(formData);
+      
+      // Show success with password
+      toast.success(
+        <div>
+          <p className="font-semibold">Employee created successfully!</p>
+          <p className="text-sm mt-1">Email: {result.email}</p>
+          <p className="text-sm">Password: {result.password}</p>
+          <p className="text-xs mt-2 text-amber-600">⚠️ Save this password - it won't be shown again!</p>
+        </div>,
+        { duration: 10000 }
+      );
+      
+      setTimeout(() => {
+        navigate('/hr/employees');
+      }, 2000);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create employee');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const steps = [
@@ -414,8 +392,8 @@ const CreateEmployee = () => {
                   <Button type="button" variant="secondary" onClick={() => setStep(1)}>
                     Back
                   </Button>
-                  <Button type="submit" variant="primary">
-                    Create Employee & Send Notification
+                  <Button type="submit" variant="primary" disabled={isLoading}>
+                    {isLoading ? 'Creating Employee...' : 'Create Employee & Send Notification'}
                   </Button>
                 </div>
               </form>

@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { Check, Clock, FileText, UserCheck, MapPin, Activity, FileCheck, Award, CreditCard, Upload } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const StatusTracking = () => {
   const { currentUser } = useAuth();
   const { getEmployee } = useData();
-  const employee = getEmployee(currentUser.id);
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize state before any early returns
   const [expandedPhases, setExpandedPhases] = useState({
@@ -15,6 +17,63 @@ const StatusTracking = () => {
     'Finalization': false,
   });
 
+  useEffect(() => {
+    const loadEmployee = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const data = await getEmployee(currentUser.employeeId);
+          setEmployee(data);
+        } catch (error) {
+          console.error('Failed to load employee:', error);
+          toast.error('Failed to load status data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadEmployee();
+  }, [currentUser?.employeeId, getEmployee]);
+
+  // Set the current phase to be expanded when employee data changes
+  useEffect(() => {
+    if (employee) {
+      const timelineSteps = [
+        { completed: employee.documents_uploaded, phase: 'Pre-Arrival' },
+        { completed: employee.hr_reviewed, phase: 'Pre-Arrival' },
+        { completed: employee.entry_permit_generated, phase: 'Pre-Arrival' },
+        { completed: employee.arrival_updated, phase: 'In-Country' },
+        { completed: employee.medical_certificate_uploaded, phase: 'In-Country' },
+        { completed: employee.biometric_confirmed, phase: 'In-Country' },
+        { completed: employee.contract_signed, phase: 'Finalization' },
+        { completed: employee.mohre_approved, phase: 'Finalization' },
+        { completed: employee.visa_received, phase: 'Finalization' },
+        { completed: employee.stamped_visa_uploaded, phase: 'Finalization' },
+      ];
+      
+      const currentIndex = timelineSteps.findIndex(step => !step.completed);
+      const currentPhase = timelineSteps[currentIndex]?.phase;
+      
+      if (currentPhase) {
+        setExpandedPhases({
+          'Pre-Arrival': currentPhase === 'Pre-Arrival',
+          'In-Country': currentPhase === 'In-Country',
+          'Finalization': currentPhase === 'Finalization',
+        });
+      }
+    }
+  }, [employee]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading status...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!employee) {
     return <div>Loading...</div>;
   }
@@ -22,70 +81,70 @@ const StatusTracking = () => {
   const timelineSteps = [
     { 
       label: 'Documents Uploaded', 
-      completed: employee.preArrival?.documentsUploaded,
+      completed: employee.documents_uploaded,
       phase: 'Pre-Arrival',
       icon: FileText,
       description: 'All required documents submitted'
     },
     { 
       label: 'HR Review Completed', 
-      completed: employee.preArrival?.hrReviewed,
+      completed: employee.hr_reviewed,
       phase: 'Pre-Arrival',
       icon: UserCheck,
       description: 'Documents verified by HR team'
     },
     { 
       label: 'Entry Permit Generated', 
-      completed: employee.preArrival?.entryPermitGenerated,
+      completed: employee.entry_permit_generated,
       phase: 'Pre-Arrival',
       icon: FileCheck,
       description: 'Entry permit has been issued'
     },
     { 
       label: 'Arrival Updated', 
-      completed: employee.inCountry?.arrivalUpdated,
+      completed: employee.arrival_updated,
       phase: 'In-Country',
       icon: MapPin,
       description: 'Arrival details confirmed'
     },
     { 
       label: 'Medical Examination', 
-      completed: employee.inCountry?.medicalCertificate,
+      completed: employee.medical_certificate_uploaded,
       phase: 'In-Country',
       icon: Activity,
       description: 'Medical check-up completed'
     },
     { 
       label: 'Biometric Confirmed', 
-      completed: employee.inCountry?.biometricConfirmed,
+      completed: employee.biometric_confirmed,
       phase: 'In-Country',
       icon: UserCheck,
       description: 'Biometric data recorded'
     },
     { 
       label: 'Contract Signed', 
-      completed: employee.finalization?.contractSigned,
+      completed: employee.contract_signed,
       phase: 'Finalization',
       icon: FileText,
       description: 'Employment contract finalized'
     },
     { 
       label: 'MOHRE Approved', 
-      completed: employee.finalization?.mohreApproved,
+      completed: employee.mohre_approved,
       phase: 'Finalization',
       icon: Award,
       description: 'Ministry approval received'
     },
     { 
       label: 'Visa Received', 
-      completed: employee.finalization?.visaReceived,
+      completed: employee.visa_received,
       phase: 'Finalization',
       icon: CreditCard,
       description: 'Visa has been issued'
     },
     { 
       label: 'Stamped Visa Uploaded', 
-      completed: employee.finalization?.stampedVisaUploaded,
+      completed: employee.stamped_visa_uploaded,
       phase: 'Finalization',
       icon: Upload,
       description: 'Final visa document uploaded'
@@ -102,18 +161,6 @@ const StatusTracking = () => {
   const progressPercentage = (completedSteps / totalSteps) * 100;
 
   const phases = ['Pre-Arrival', 'In-Country', 'Finalization'];
-
-  // Set the current phase to be expanded on mount
-  useEffect(() => {
-    const currentPhase = timelineSteps[currentIndex]?.phase;
-    if (currentPhase) {
-      setExpandedPhases({
-        'Pre-Arrival': currentPhase === 'Pre-Arrival',
-        'In-Country': currentPhase === 'In-Country',
-        'Finalization': currentPhase === 'Finalization',
-      });
-    }
-  }, [currentIndex]);
 
   const togglePhase = (phase) => {
     setExpandedPhases(prev => ({

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { storage } from '../utils/storage';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -16,18 +16,37 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const user = storage.getCurrentUser();
-    setCurrentUser(user);
+    // Check for existing session
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+      setCurrentUser(JSON.parse(user));
+    }
     setIsLoading(false);
   }, []);
 
-  const login = (user) => {
-    storage.setCurrentUser(user);
-    setCurrentUser(user);
+  const login = async (email, password) => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { token, user } = response.data;
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      setCurrentUser(user);
+      
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed'
+      };
+    }
   };
 
   const logout = () => {
-    storage.clearCurrentUser();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setCurrentUser(null);
   };
 

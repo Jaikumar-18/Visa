@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, MapPin, Calendar } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -11,55 +11,96 @@ import toast from 'react-hot-toast';
 const MedicalCertificate = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { getEmployee, updateEmployee, addHRNotification } = useData();
-  const employee = getEmployee(currentUser.id);
+  const { getEmployee, uploadDocument, workflow, addHRNotification } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [medicalCertificate, setMedicalCertificate] = useState(null);
   const [medicalReport, setMedicalReport] = useState(null);
 
-  if (!employee) {
-    return <div>Loading...</div>;
+  useEffect(() => {
+    const loadEmployee = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const data = await getEmployee(currentUser.employeeId);
+          setEmployee(data);
+        } catch (error) {
+          console.error('Failed to load employee:', error);
+          toast.error('Failed to load employee data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadEmployee();
+  }, [currentUser?.employeeId, getEmployee]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  const appointment = employee.inCountry?.medicalAppointment;
+  if (!employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee data not found</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleSubmit = (e) => {
+  const appointment = employee.medical_appointment_scheduled ? {
+    center: 'Medical Center',
+    location: 'Dubai',
+    date: new Date().toLocaleDateString(),
+    time: '10:00 AM'
+  } : null;
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     if (!medicalCertificate) {
       toast.error('Please upload medical certificate');
+      setIsSubmitting(false);
       return;
     }
 
-    updateEmployee(currentUser.id, {
-      inCountry: {
-        ...employee.inCountry,
-        medicalAppointment: {
-          ...appointment,
-          status: 'completed',
-          completedAt: new Date().toISOString(),
-        },
-        medicalCertificate: {
-          file: medicalCertificate,
-          uploadedAt: new Date().toISOString(),
-          status: 'pending-review',
-        },
-        medicalReport: medicalReport ? {
-          file: medicalReport,
-          uploadedAt: new Date().toISOString(),
-        } : null,
-      },
-    });
+    try {
+      // Convert base64 to File object for upload
+      const medicalCertFile = await fetch(medicalCertificate).then(r => r.blob()).then(blob => new File([blob], 'medical_certificate.pdf', { type: blob.type }));
+      await uploadDocument(medicalCertFile, currentUser.employeeId, 'medical_certificate');
+      
+      if (medicalReport) {
+        const medicalReportFile = await fetch(medicalReport).then(r => r.blob()).then(blob => new File([blob], 'medical_report.pdf', { type: blob.type }));
+        await uploadDocument(medicalReportFile, currentUser.employeeId, 'medical_report');
+      }
 
-    // Notify HR
-    addHRNotification(
-      `${employee.name} (${employee.jobTitle}) has uploaded medical certificate. Awaiting HR review.`,
-      'success',
-      currentUser.id
-    );
+      await workflow.uploadMedicalCert(currentUser.employeeId);
 
-    toast.success('Medical certificate uploaded successfully!');
-    setTimeout(() => navigate('/employee/dashboard'), 1000);
+      // Notify HR
+      await addHRNotification(
+        `${employee.first_name} ${employee.last_name} (${employee.job_title}) has uploaded medical certificate.`,
+        'success',
+        currentUser.employeeId
+      );
+
+      toast.success('Medical certificate uploaded successfully!');
+      setTimeout(() => navigate('/employee/dashboard'), 1500);
+    } catch (error) {
+      console.error('Failed to upload medical certificate:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload medical certificate');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const workflowSteps = [
@@ -157,11 +198,11 @@ const MedicalCertificate = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')}>
+              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
-                Submit Medical Certificate
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Uploading...' : 'Submit Medical Certificate'}
               </Button>
             </div>
           </form>

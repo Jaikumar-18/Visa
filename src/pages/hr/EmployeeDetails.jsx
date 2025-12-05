@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   User, FileText, Calendar, CheckCircle, Clock, 
@@ -9,12 +10,75 @@ import { useData } from '../../context/DataContext';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import StatusCard from '../../components/common/StatusCard';
+import toast from 'react-hot-toast';
 
 const EmployeeDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { getEmployee } = useData();
-  const employee = getEmployee(parseInt(id));
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [photoUrl, setPhotoUrl] = useState(null);
+
+  useEffect(() => {
+    const loadEmployee = async () => {
+      try {
+        const data = await getEmployee(parseInt(id));
+        setEmployee(data);
+
+        // Load photo with authentication
+        const photoDoc = data?.documents?.find(doc => 
+          doc.document_type === 'photo' || 
+          doc.document_type === 'passport_photo' ||
+          doc.document_type === 'passport_size_photo'
+        );
+        
+        if (photoDoc && photoDoc.mime_type?.startsWith('image/')) {
+          try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(
+              `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}/api/documents/${photoDoc.id}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              }
+            );
+            if (response.ok) {
+              const blob = await response.blob();
+              setPhotoUrl(URL.createObjectURL(blob));
+            }
+          } catch (err) {
+            console.error('Failed to load photo:', err);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load employee:', error);
+        toast.error('Failed to load employee data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadEmployee();
+
+    // Cleanup blob URL
+    return () => {
+      if (photoUrl) {
+        URL.revokeObjectURL(photoUrl);
+      }
+    };
+  }, [id, getEmployee]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading employee details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!employee) {
     return (
@@ -26,26 +90,18 @@ const EmployeeDetails = () => {
     );
   }
 
-  const getStageColor = (stage) => {
-    const colors = {
-      'pre-arrival': 'bg-amber-100 text-amber-700',
-      'in-country': 'bg-blue-100 text-blue-700',
-      'finalization': 'bg-purple-100 text-purple-700',
-      'completed': 'bg-success-100 text-success-700',
-    };
-    return colors[stage] || 'bg-gray-100 text-gray-700';
-  };
+
 
   const timelineSteps = [
-    { label: 'Documents Uploaded', completed: employee.preArrival?.documentsUploaded, phase: 'Pre-Arrival' },
-    { label: 'HR Review', completed: employee.preArrival?.hrReviewed, phase: 'Pre-Arrival' },
-    { label: 'Entry Permit', completed: employee.preArrival?.entryPermitGenerated, phase: 'Pre-Arrival' },
-    { label: 'Arrival Updated', completed: employee.inCountry?.arrivalUpdated, phase: 'In-Country' },
-    { label: 'Medical Exam', completed: employee.inCountry?.medicalCertificate, phase: 'In-Country' },
-    { label: 'Biometric', completed: employee.inCountry?.biometricConfirmed, phase: 'In-Country' },
-    { label: 'Contract Signed', completed: employee.finalization?.contractSigned, phase: 'Finalization' },
-    { label: 'MOHRE Approved', completed: employee.finalization?.mohreApproved, phase: 'Finalization' },
-    { label: 'Visa Received', completed: employee.finalization?.visaReceived, phase: 'Finalization' },
+    { label: 'Documents Uploaded', completed: employee.documents_uploaded, phase: 'Pre-Arrival' },
+    { label: 'HR Review', completed: employee.hr_reviewed, phase: 'Pre-Arrival' },
+    { label: 'Entry Permit', completed: employee.entry_permit_generated, phase: 'Pre-Arrival' },
+    { label: 'Arrival Updated', completed: employee.arrival_updated, phase: 'In-Country' },
+    { label: 'Medical Exam', completed: employee.medical_certificate_uploaded, phase: 'In-Country' },
+    { label: 'Biometric', completed: employee.biometric_confirmed, phase: 'In-Country' },
+    { label: 'Contract Signed', completed: employee.contract_signed, phase: 'Finalization' },
+    { label: 'MOHRE Approved', completed: employee.mohre_approved, phase: 'Finalization' },
+    { label: 'Visa Received', completed: employee.visa_received, phase: 'Finalization' },
   ];
 
   const completedSteps = timelineSteps.filter(s => s.completed).length;
@@ -72,10 +128,10 @@ const EmployeeDetails = () => {
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl shadow-xl p-8 mb-6 text-white">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-6">
-            {(employee.documents?.photo?.file || employee.passportPhoto) ? (
+            {photoUrl ? (
               <img
-                src={employee.documents?.photo?.file || employee.passportPhoto}
-                alt={employee.name}
+                src={photoUrl}
+                alt={`${employee.first_name} ${employee.last_name}`}
                 className="w-24 h-32 object-cover rounded-lg border-4 border-white shadow-lg"
               />
             ) : (
@@ -84,11 +140,11 @@ const EmployeeDetails = () => {
               </div>
             )}
             <div>
-              <h1 className="text-4xl font-bold mb-2">{employee.name}</h1>
+              <h1 className="text-4xl font-bold mb-2">{employee.first_name} {employee.last_name}</h1>
               <div className="flex items-center gap-4 text-primary-100">
                 <div className="flex items-center gap-2">
                   <IdCardLanyard size={18} />
-                  <span>{employee.jobTitle}</span>
+                  <span>{employee.job_title}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin size={18} />
@@ -109,14 +165,14 @@ const EmployeeDetails = () => {
           </div>
           <div className="text-right">
             <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-              employee.currentStage === 'completed' 
+              employee.current_stage === 'completed' 
                 ? 'bg-success-500' 
                 : 'bg-white text-primary-600'
             }`}>
-              {employee.currentStage}
+              {employee.current_stage}
             </span>
             <p className="text-sm text-primary-100 mt-2">
-              Created: {new Date(employee.createdAt).toLocaleDateString()}
+              Created: {new Date(employee.created_at).toLocaleDateString()}
             </p>
           </div>
         </div>
@@ -141,14 +197,14 @@ const EmployeeDetails = () => {
         <StatusCard
           icon={User}
           label="Visa Type"
-          value={employee.visaType}
+          value={employee.visa_type}
           bgColor="bg-primary-100"
           iconColor="text-primary-600"
         />
         <StatusCard
           icon={Calendar}
           label="Created"
-          value={new Date(employee.createdAt).toLocaleDateString()}
+          value={new Date(employee.created_at).toLocaleDateString()}
           bgColor="bg-blue-100"
           iconColor="text-blue-600"
         />
@@ -163,7 +219,7 @@ const EmployeeDetails = () => {
           icon={Clock}
           label="Days in Process"
           value={(() => {
-            const days = Math.floor((Date.now() - new Date(employee.createdAt)) / (1000 * 60 * 60 * 24));
+            const days = Math.floor((Date.now() - new Date(employee.created_at)) / (1000 * 60 * 60 * 24));
             return days === 0 ? 'Today' : days;
           })()}
           bgColor="bg-amber-100"
@@ -175,7 +231,7 @@ const EmployeeDetails = () => {
       <Card title="Action Items">
         <div className="space-y-3">
           {/* Review Documents */}
-          {employee.preArrival?.documentsUploaded && !employee.preArrival?.hrReviewed && (
+          {employee.documents_uploaded && !employee.hr_reviewed && (
             <div className="flex items-center justify-between p-4 bg-primary-50 border border-primary-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <Eye className="text-primary-600" size={24} />
@@ -191,7 +247,7 @@ const EmployeeDetails = () => {
           )}
 
           {/* DISO Portal Info */}
-          {employee.preArrival?.hrReviewed && !employee.preArrival?.disoInfoCompleted && (
+          {employee.hr_reviewed && !employee.diso_info_completed && (
             <div className="flex items-center justify-between p-4 bg-primary-50 border border-primary-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <FileText className="text-primary-600" size={24} />
@@ -207,7 +263,7 @@ const EmployeeDetails = () => {
           )}
 
           {/* Book Medical */}
-          {employee.inCountry?.arrivalUpdated && !employee.inCountry?.medicalAppointment?.status && (
+          {employee.arrival_updated && !employee.medical_appointment_scheduled && (
             <div className="flex items-center justify-between p-4 bg-primary-50 border border-primary-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <Stethoscope className="text-primary-600" size={24} />
@@ -223,7 +279,7 @@ const EmployeeDetails = () => {
           )}
 
           {/* Submit Residence Visa */}
-          {employee.inCountry?.biometricConfirmed && !employee.inCountry?.residenceVisaSubmitted && (
+          {employee.biometric_confirmed && !employee.residence_visa_submitted && (
             <div className="flex items-center justify-between p-4 bg-primary-50 border border-primary-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <Send className="text-primary-600" size={24} />
@@ -239,7 +295,7 @@ const EmployeeDetails = () => {
           )}
 
           {/* Initiate Contract */}
-          {employee.inCountry?.residenceVisaSubmitted && !employee.finalization?.contractInitiated && (
+          {employee.residence_visa_submitted && !employee.contract_initiated && (
             <div className="flex items-center justify-between p-4 bg-primary-50 border border-primary-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <FileSignature className="text-primary-600" size={24} />
@@ -255,7 +311,7 @@ const EmployeeDetails = () => {
           )}
 
           {/* Submit to MOHRE */}
-          {employee.finalization?.contractSigned && !employee.finalization?.mohreSubmitted && (
+          {employee.contract_signed && !employee.mohre_submitted && (
             <div className="flex items-center justify-between p-4 bg-primary-50 border border-primary-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <Send className="text-primary-600" size={24} />
@@ -271,7 +327,7 @@ const EmployeeDetails = () => {
           )}
 
           {/* Apply for Visa */}
-          {employee.finalization?.mohreApproved && !employee.finalization?.visaApplicationSubmitted && (
+          {employee.mohre_approved && !employee.visa_application_submitted && (
             <div className="flex items-center justify-between p-4 bg-primary-50 border border-primary-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <FileText className="text-primary-600" size={24} />
@@ -287,19 +343,19 @@ const EmployeeDetails = () => {
           )}
 
           {/* Waiting states */}
-          {!employee.preArrival?.documentsUploaded && (
+          {!employee.documents_uploaded && (
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <p className="text-gray-600">Waiting for employee to upload documents</p>
             </div>
           )}
 
-          {employee.finalization?.contractInitiated && !employee.finalization?.contractSigned && (
+          {employee.contract_initiated && !employee.contract_signed && (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-amber-800">Waiting for employee to sign contract</p>
             </div>
           )}
 
-          {employee.currentStage === 'completed' && (
+          {employee.current_stage === 'completed' && (
             <div className="p-4 bg-success-50 border border-success-200 rounded-lg text-center">
               <CheckCircle className="mx-auto text-success-600 mb-2" size={32} />
               <p className="font-medium text-success-900">Process Complete!</p>
@@ -322,11 +378,11 @@ const EmployeeDetails = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500">Passport Number</p>
-              <p className="font-medium text-gray-900">{employee.passportNumber || 'Not provided'}</p>
+              <p className="font-medium text-gray-900">{employee.passport_number || 'Not provided'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Nationality</p>
-              <p className="font-medium text-gray-900">{employee.nationality || 'Not provided'}</p>
+              <p className="font-medium text-gray-900">{employee.present_nationality || 'Not provided'}</p>
             </div>
           </div>
         </Card>
@@ -335,7 +391,7 @@ const EmployeeDetails = () => {
           <div className="space-y-3">
             <div>
               <p className="text-sm text-gray-500">Job Title</p>
-              <p className="font-medium text-gray-900">{employee.jobTitle}</p>
+              <p className="font-medium text-gray-900">{employee.job_title}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Department</p>
@@ -347,7 +403,7 @@ const EmployeeDetails = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500">Start Date</p>
-              <p className="font-medium text-gray-900">{employee.startDate}</p>
+              <p className="font-medium text-gray-900">{employee.start_date}</p>
             </div>
           </div>
         </Card>

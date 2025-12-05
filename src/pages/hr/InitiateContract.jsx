@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FileText, Send } from 'lucide-react';
 import { useData } from '../../context/DataContext';
@@ -9,8 +9,25 @@ import toast from 'react-hot-toast';
 const InitiateContract = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { getEmployee, updateEmployee, addNotification } = useData();
-  const employee = getEmployee(parseInt(id));
+  const { getEmployee, workflow, addNotification } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadEmployee = async () => {
+      try {
+        const data = await getEmployee(parseInt(id));
+        setEmployee(data);
+      } catch (error) {
+        console.error('Failed to load employee:', error);
+        toast.error('Failed to load employee data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadEmployee();
+  }, [id, getEmployee]);
 
   const [formData, setFormData] = useState({
     contractType: 'limited',
@@ -23,8 +40,25 @@ const InitiateContract = () => {
     additionalTerms: '',
   });
 
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!employee) {
-    return <div>Employee not found</div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee not found</p>
+        </div>
+      </div>
+    );
   }
 
   const handleInputChange = (e) => {
@@ -34,38 +68,37 @@ const InitiateContract = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    const contractData = {
-      ...formData,
-      employeeName: employee.name,
-      jobTitle: employee.jobTitle,
-      department: employee.department,
-      salary: employee.salary,
-      generatedAt: new Date().toISOString(),
-      status: 'pending-signature',
-    };
+    try {
+      await workflow.initiateContract(employee.id, {
+        contractType: formData.contractType,
+        duration: formData.duration,
+        probationPeriod: formData.probationPeriod,
+        noticePeriod: formData.noticePeriod,
+        workingHours: formData.workingHours,
+        annualLeave: formData.annualLeave,
+        benefits: formData.benefits,
+        additionalTerms: formData.additionalTerms,
+      });
 
-    updateEmployee(employee.id, {
-      finalization: {
-        ...employee.finalization,
-        contractInitiated: true,
-        contractData,
-        contractInitiatedAt: new Date().toISOString(),
-      },
-      currentStage: 'finalization',
-    });
+      // Notify employee
+      await addNotification(
+        employee.id,
+        'Your employment contract is ready for review and signature.',
+        'info'
+      );
 
-    // Notify employee
-    addNotification(
-      employee.id,
-      'Your employment contract is ready for review and signature.',
-      'info'
-    );
-
-    toast.success('Contract sent to employee for signature!');
-    setTimeout(() => navigate(`/hr/employee/${employee.id}`), 1500);
+      toast.success('Contract sent to employee for signature!');
+      setTimeout(() => navigate('/hr/employees'), 1500);
+    } catch (error) {
+      console.error('Failed to initiate contract:', error);
+      toast.error(error.response?.data?.message || 'Failed to initiate contract');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -75,7 +108,7 @@ const InitiateContract = () => {
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-2xl font-semibold text-neutral-900">Initiate Employment Contract</h1>
-            <p className="text-sm text-neutral-600">Generate contract for {employee.name}</p>
+            <p className="text-sm text-neutral-600">Generate contract for {employee.first_name} {employee.last_name}</p>
           </div>
         </div>
 
@@ -88,11 +121,11 @@ const InitiateContract = () => {
               <div className="grid grid-cols-4 gap-3">
                 <div>
                   <p className="text-xs text-neutral-500">Name</p>
-                  <p className="text-xs font-medium text-neutral-900">{employee.name}</p>
+                  <p className="text-xs font-medium text-neutral-900">{employee.first_name} {employee.last_name}</p>
                 </div>
                 <div>
                   <p className="text-xs text-neutral-500">Job Title</p>
-                  <p className="text-xs font-medium text-neutral-900">{employee.jobTitle}</p>
+                  <p className="text-xs font-medium text-neutral-900">{employee.job_title}</p>
                 </div>
                 <div>
                   <p className="text-xs text-neutral-500">Department</p>
@@ -210,11 +243,11 @@ const InitiateContract = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <Button type="button" variant="secondary" onClick={() => navigate('/hr/employees')}>
+              <Button type="button" variant="secondary" onClick={() => navigate('/hr/employees')} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" icon={Send}>
-                Generate & Send Contract
+              <Button type="submit" variant="primary" icon={Send} disabled={isSubmitting}>
+                {isSubmitting ? 'Generating...' : 'Generate & Send Contract'}
               </Button>
             </div>
           </form>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Fingerprint, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -12,8 +12,27 @@ import toast from 'react-hot-toast';
 const BiometricConfirmation = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { getEmployee, updateEmployee, addHRNotification } = useData();
-  const employee = getEmployee(currentUser.id);
+  const { getEmployee, workflow, uploadDocument, addHRNotification } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadEmployee = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const data = await getEmployee(currentUser.employeeId);
+          setEmployee(data);
+        } catch (error) {
+          console.error('Failed to load employee:', error);
+          toast.error('Failed to load employee data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadEmployee();
+  }, [currentUser?.employeeId, getEmployee]);
 
   const [formData, setFormData] = useState({
     submissionDate: '',
@@ -23,6 +42,27 @@ const BiometricConfirmation = () => {
 
   const [receipt, setReceipt] = useState(null);
 
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee data not found</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -30,30 +70,37 @@ const BiometricConfirmation = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    updateEmployee(currentUser.id, {
-      inCountry: {
-        ...employee.inCountry,
-        biometricConfirmed: true,
-        biometricDetails: {
-          ...formData,
-          receipt: receipt,
-          confirmedAt: new Date().toISOString(),
-        },
-      },
-    });
+    try {
+      if (receipt) {
+        const receiptFile = await fetch(receipt).then(r => r.blob()).then(blob => new File([blob], 'biometric_receipt.pdf', { type: blob.type }));
+        await uploadDocument(receiptFile, currentUser.employeeId, 'biometric_receipt');
+      }
 
-    // Notify HR
-    addHRNotification(
-      `${employee.name} (${employee.jobTitle}) has confirmed biometric submission. Ready for residence visa processing.`,
-      'success',
-      currentUser.id
-    );
+      await workflow.confirmBiometric(currentUser.employeeId, {
+        submissionDate: formData.submissionDate,
+        location: formData.location,
+        referenceNumber: formData.referenceNumber,
+      });
 
-    toast.success('Biometric confirmation submitted successfully!');
-    setTimeout(() => navigate('/employee/dashboard'), 1000);
+      // Notify HR
+      await addHRNotification(
+        `${employee.first_name} ${employee.last_name} (${employee.job_title}) has confirmed biometric submission. Ready for residence visa processing.`,
+        'success',
+        currentUser.employeeId
+      );
+
+      toast.success('Biometric confirmation submitted successfully!');
+      setTimeout(() => navigate('/employee/dashboard'), 1500);
+    } catch (error) {
+      console.error('Failed to confirm biometric:', error);
+      toast.error(error.response?.data?.message || 'Failed to confirm biometric');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const workflowSteps = [
@@ -158,11 +205,11 @@ const BiometricConfirmation = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')}>
+              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
-                Confirm Biometric Submission
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : 'Confirm Biometric Submission'}
               </Button>
             </div>
           </form>

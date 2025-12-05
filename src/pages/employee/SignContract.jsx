@@ -10,58 +10,92 @@ import toast from 'react-hot-toast';
 const SignContract = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { getEmployee, updateEmployee, addHRNotification, refreshEmployees } = useData();
-  const employee = getEmployee(currentUser.id);
+  const { getEmployee, workflow, addHRNotification } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
-  // Refresh data on mount
   useEffect(() => {
-    refreshEmployees();
-  }, [refreshEmployees]);
+    const loadEmployee = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const data = await getEmployee(currentUser.employeeId);
+          setEmployee(data);
+        } catch (error) {
+          console.error('Failed to load employee:', error);
+          toast.error('Failed to load employee data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadEmployee();
+  }, [currentUser?.employeeId, getEmployee]);
 
-  if (!employee) {
-    return <div>Loading...</div>;
-  }
-
-  const contract = employee.finalization?.contractData;
-
-  if (!contract) {
+  if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto">
-        <Card>
-          <p className="text-center text-gray-600">No contract available yet.</p>
-        </Card>
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
       </div>
     );
   }
 
-  const handleSign = () => {
+  if (!employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee data not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const contract = {
+    employeeName: `${employee.first_name} ${employee.last_name}`,
+    jobTitle: employee.job_title,
+    department: employee.department,
+    salary: employee.salary,
+    contractType: 'limited',
+    duration: '2',
+    probationPeriod: '6',
+    noticePeriod: '30',
+    workingHours: '8',
+    annualLeave: '30',
+    generatedAt: new Date().toISOString()
+  };
+
+
+
+  const handleSign = async () => {
     if (!agreed) {
       toast.error('Please agree to the terms and conditions');
       return;
     }
 
-    updateEmployee(currentUser.id, {
-      finalization: {
-        ...employee.finalization,
-        contractSigned: true,
-        contractSignedAt: new Date().toISOString(),
-        contractData: {
-          ...contract,
-          status: 'signed',
-        },
-      },
-    });
+    setIsSubmitting(true);
 
-    // Notify HR
-    addHRNotification(
-      `${employee.name} (${employee.jobTitle}) has signed the employment contract. Ready for MOHRE submission.`,
-      'success',
-      currentUser.id
-    );
+    try {
+      await workflow.signContract(currentUser.employeeId);
 
-    toast.success('Contract signed successfully! HR will now submit to MOHRE.');
-    setTimeout(() => navigate('/employee/dashboard'), 1500);
+      // Notify HR
+      await addHRNotification(
+        `${employee.first_name} ${employee.last_name} (${employee.job_title}) has signed the employment contract. Ready for MOHRE submission.`,
+        'success',
+        currentUser.employeeId
+      );
+
+      toast.success('Contract signed successfully! HR will now submit to MOHRE.');
+      setTimeout(() => navigate('/employee/dashboard'), 1500);
+    } catch (error) {
+      console.error('Failed to sign contract:', error);
+      toast.error(error.response?.data?.message || 'Failed to sign contract');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const workflowSteps = [
@@ -197,10 +231,10 @@ const SignContract = () => {
               type="button"
               variant="primary"
               onClick={handleSign}
-              disabled={!agreed}
+              disabled={!agreed || isSubmitting}
               icon={CheckCircle}
             >
-              Sign Contract
+              {isSubmitting ? 'Signing...' : 'Sign Contract'}
             </Button>
           </div>
         </div>

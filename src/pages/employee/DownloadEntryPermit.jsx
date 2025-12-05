@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, CheckCircle, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -8,28 +9,57 @@ import toast from 'react-hot-toast';
 const DownloadEntryPermit = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { getEmployee, updateEmployee } = useData();
-  const employee = getEmployee(currentUser.id);
+  const { getEmployee, workflow } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!employee) {
-    return <div>Loading...</div>;
+  useEffect(() => {
+    const loadEmployee = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const data = await getEmployee(currentUser.employeeId);
+          setEmployee(data);
+        } catch (error) {
+          console.error('Failed to load employee:', error);
+          toast.error('Failed to load employee data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadEmployee();
+  }, [currentUser?.employeeId, getEmployee]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleDownload = () => {
-    // Simulate PDF download
-    toast.success('Entry Permit downloaded successfully!');
-    
-    // Update employee status
-    updateEmployee(currentUser.id, {
-      preArrival: {
-        ...employee.preArrival,
-        entryPermitGenerated: true,
-        entryPermitDownloadedAt: new Date().toISOString(),
-      },
-      currentStage: 'in-transit',
-    });
+  if (!employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee data not found</p>
+        </div>
+      </div>
+    );
+  }
 
-    setTimeout(() => navigate('/employee/dashboard'), 1000);
+  const handleDownload = async () => {
+    try {
+      await workflow.generateEntryPermit(currentUser.employeeId);
+      toast.success('Entry Permit downloaded successfully!');
+      setTimeout(() => navigate('/employee/dashboard'), 1500);
+    } catch (error) {
+      console.error('Failed to download entry permit:', error);
+      toast.error(error.response?.data?.message || 'Failed to download entry permit');
+    }
   };
 
   return (
@@ -62,7 +92,7 @@ const DownloadEntryPermit = () => {
                   <div className="text-left">
                     <p className="text-sm font-semibold text-neutral-900">UAE Entry Permit</p>
                     <p className="text-xs text-neutral-600">Valid for 60 days</p>
-                    <p className="text-xs text-neutral-600">Employee: {employee.name}</p>
+                    <p className="text-xs text-neutral-600">Employee: {employee.first_name} {employee.last_name}</p>
                   </div>
                 </div>
               </div>

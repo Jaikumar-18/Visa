@@ -14,8 +14,9 @@ import Tesseract from 'tesseract.js';
 const UploadDocuments = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { getEmployee, updateEmployee, addNotification, addHRNotification } = useData();
-  const employee = getEmployee(currentUser.id);
+  const { getEmployee, updateEmployee, updatePassportDetails, uploadDocument, workflow, addNotification, addHRNotification, refreshEmployees } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -59,47 +60,55 @@ const UploadDocuments = () => {
     other: null,
   });
 
+  // Load employee data
   useEffect(() => {
-    // Only load data once when component mounts or employee ID changes
-    if (employee && employee.id) {
-      setFormData({
-        // Personal Details
-        motherName: employee.motherName || '',
-        motherNameArabic: employee.motherNameArabic || '',
-        religion: employee.religion || '',
-        faith: employee.faith || '',
-        languagesKnown: employee.languagesKnown || '',
-        dependentsVisa: employee.dependentsVisa || '',
-        // Passport Details
-        passportNumber: employee.passportNumber || '',
-        passportType: employee.passportType || '',
-        dateOfIssue: employee.dateOfIssue || '',
-        dateOfExpiry: employee.dateOfExpiry || '',
-        placeOfIssueCountry: employee.placeOfIssueCountry || '',
-        placeOfIssueCountryArabic: employee.placeOfIssueCountryArabic || '',
-        placeOfIssueCity: employee.placeOfIssueCity || '',
-        placeOfIssueCityArabic: employee.placeOfIssueCityArabic || '',
-        dateOfBirth: employee.dateOfBirth || '',
-        countryOfBirth: employee.countryOfBirth || '',
-        countryOfBirthArabic: employee.countryOfBirthArabic || '',
-        placeOfBirthCity: employee.placeOfBirthCity || '',
-        placeOfBirthCityArabic: employee.placeOfBirthCityArabic || '',
-        presentNationality: employee.presentNationality || '',
-        previousNationality: employee.previousNationality || '',
-        // Address Details
-        address: employee.address || '',
-        emergencyContact: employee.emergencyContact || '',
-        emergencyContactName: employee.emergencyContactName || '',
-      });
-      setDocuments(employee.documents || {
-        passport: null,
-        photo: null,
-        certificates: null,
-        employmentLetter: null,
-        other: null,
-      });
-    }
-  }, [employee?.id]); // Only run when employee ID changes, not on every render
+    const loadEmployee = async () => {
+      if (currentUser?.employeeId) {
+        try {
+          const data = await getEmployee(currentUser.employeeId);
+          setEmployee(data);
+          
+          // Pre-fill form with existing data only if fields are empty
+          setFormData(prev => ({
+            // Personal Details
+            motherName: prev.motherName || data.mother_name || '',
+            motherNameArabic: prev.motherNameArabic || data.mother_name_arabic || '',
+            religion: prev.religion || data.religion || '',
+            faith: prev.faith || data.faith || '',
+            languagesKnown: prev.languagesKnown || data.languages_known || '',
+            dependentsVisa: prev.dependentsVisa || data.dependents_visa || '',
+            // Passport Details
+            passportNumber: prev.passportNumber || data.passport_number || '',
+            passportType: prev.passportType || data.passport_type || '',
+            dateOfIssue: prev.dateOfIssue || data.date_of_issue || '',
+            dateOfExpiry: prev.dateOfExpiry || data.date_of_expiry || '',
+            placeOfIssueCountry: prev.placeOfIssueCountry || data.place_of_issue_country || '',
+            placeOfIssueCountryArabic: prev.placeOfIssueCountryArabic || data.place_of_issue_country_arabic || '',
+            placeOfIssueCity: prev.placeOfIssueCity || data.place_of_issue_city || '',
+            placeOfIssueCityArabic: prev.placeOfIssueCityArabic || data.place_of_issue_city_arabic || '',
+            dateOfBirth: prev.dateOfBirth || data.date_of_birth || '',
+            countryOfBirth: prev.countryOfBirth || data.country_of_birth || '',
+            countryOfBirthArabic: prev.countryOfBirthArabic || data.country_of_birth_arabic || '',
+            placeOfBirthCity: prev.placeOfBirthCity || data.place_of_birth_city || '',
+            placeOfBirthCityArabic: prev.placeOfBirthCityArabic || data.place_of_birth_city_arabic || '',
+            presentNationality: prev.presentNationality || data.present_nationality || '',
+            previousNationality: prev.previousNationality || data.previous_nationality || '',
+            // Address Details
+            address: prev.address || data.address || '',
+            emergencyContact: prev.emergencyContact || data.emergency_contact || '',
+            emergencyContactName: prev.emergencyContactName || data.emergency_contact_name || '',
+          }));
+        } catch (error) {
+          console.error('Failed to load employee:', error);
+          toast.error('Failed to load employee data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadEmployee();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.employeeId]);
 
   // Arabic transliteration maps (same as CreateEmployee) - MUST BE BEFORE handleInputChange
   const englishToArabicMap = {
@@ -501,37 +510,104 @@ const UploadDocuments = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    // Update employee with documents and basic info
-    updateEmployee(currentUser.id, {
-      ...formData,
-      documents,
-      preArrival: {
-        ...employee.preArrival,
-        documentsUploaded: true,
-        documentsUploadedAt: new Date().toISOString(),
-      },
-      status: 'pending-review',
-    });
+    try {
+      // 1. Update passport details (backend expects camelCase)
+      await updatePassportDetails(currentUser.employeeId, {
+        passportNumber: formData.passportNumber,
+        passportType: formData.passportType,
+        dateOfIssue: formData.dateOfIssue,
+        dateOfExpiry: formData.dateOfExpiry,
+        placeOfIssueCountry: formData.placeOfIssueCountry,
+        placeOfIssueCountryArabic: formData.placeOfIssueCountryArabic,
+        placeOfIssueCity: formData.placeOfIssueCity,
+        placeOfIssueCityArabic: formData.placeOfIssueCityArabic,
+        dateOfBirth: formData.dateOfBirth,
+        countryOfBirth: formData.countryOfBirth,
+        countryOfBirthArabic: formData.countryOfBirthArabic,
+        placeOfBirthCity: formData.placeOfBirthCity,
+        placeOfBirthCityArabic: formData.placeOfBirthCityArabic,
+        presentNationality: formData.presentNationality,
+        previousNationality: formData.previousNationality,
+      });
 
-    // Notify employee
-    addNotification(
-      currentUser.id,
-      'Documents uploaded successfully. Waiting for HR review.',
-      'success'
-    );
+      // 2. Update employee details (mother name, religion, etc.)
+      await updateEmployee(currentUser.employeeId, {
+        motherName: formData.motherName,
+        motherNameArabic: formData.motherNameArabic,
+        religion: formData.religion,
+        faith: formData.faith,
+        languagesKnown: formData.languagesKnown,
+        dependentsVisa: formData.dependentsVisa,
+        address: formData.address,
+        emergencyContact: formData.emergencyContact,
+        emergencyContactName: formData.emergencyContactName,
+      });
 
-    // Notify HR
-    addHRNotification(
-      `${employee.name} has uploaded documents for review.`,
-      'info',
-      currentUser.id
-    );
+      // 3. Upload documents (convert base64 to File objects)
+      const uploadPromises = [];
+      
+      const base64ToFile = async (base64String, fileName, mimeType) => {
+        const response = await fetch(base64String);
+        const blob = await response.blob();
+        return new File([blob], fileName, { type: mimeType || blob.type });
+      };
 
-    toast.success('Documents uploaded successfully!');
-    setTimeout(() => navigate('/employee/dashboard'), 1000);
+      if (documents.passport?.file) {
+        const file = await base64ToFile(documents.passport.file, documents.passport.fileName || 'passport.pdf', 'application/pdf');
+        uploadPromises.push(uploadDocument(file, currentUser.employeeId, 'passport'));
+      }
+      if (documents.photo?.file) {
+        const file = await base64ToFile(documents.photo.file, documents.photo.fileName || 'photo.jpg', 'image/jpeg');
+        uploadPromises.push(uploadDocument(file, currentUser.employeeId, 'photo'));
+      }
+      if (documents.certificates?.file) {
+        const file = await base64ToFile(documents.certificates.file, documents.certificates.fileName || 'certificates.pdf', 'application/pdf');
+        uploadPromises.push(uploadDocument(file, currentUser.employeeId, 'certificates'));
+      }
+      if (documents.employmentLetter?.file) {
+        const file = await base64ToFile(documents.employmentLetter.file, documents.employmentLetter.fileName || 'employment_letter.pdf', 'application/pdf');
+        uploadPromises.push(uploadDocument(file, currentUser.employeeId, 'employment_letter'));
+      }
+      if (documents.other?.file) {
+        const file = await base64ToFile(documents.other.file, documents.other.fileName || 'other.pdf', 'application/pdf');
+        uploadPromises.push(uploadDocument(file, currentUser.employeeId, 'other'));
+      }
+
+      await Promise.all(uploadPromises);
+
+      // 4. Submit documents workflow
+      await workflow.submitDocuments(currentUser.employeeId);
+
+      // 5. Notify employee
+      await addNotification(
+        currentUser.employeeId,
+        'Documents uploaded successfully. Waiting for HR review.',
+        'success'
+      );
+
+      // 6. Notify HR
+      await addHRNotification(
+        `${employee.first_name} ${employee.last_name} has uploaded documents for review.`,
+        'info',
+        currentUser.employeeId
+      );
+
+      toast.success('Documents uploaded successfully!');
+      
+      // Force refresh all employee data
+      refreshEmployees();
+      
+      setTimeout(() => navigate('/employee/dashboard'), 1500);
+    } catch (error) {
+      console.error('Failed to submit documents:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload documents');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const workflowSteps = [
@@ -544,6 +620,17 @@ const UploadDocuments = () => {
     { label: 'MOHRE & Visa' },
     { label: 'Upload Stamped Visa' },
   ];
+
+  if (isLoading && !employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-neutral-50 overflow-hidden">
@@ -1018,11 +1105,11 @@ const UploadDocuments = () => {
 
             {/* Submit Buttons */}
             <div className="bg-white border border-neutral-300 rounded-lg p-3 flex gap-2 sticky bottom-0">
-              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')}>
+              <Button type="button" variant="secondary" onClick={() => navigate('/employee/dashboard')} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
-                Submit Documents
+              <Button type="submit" variant="primary" disabled={isLoading}>
+                {isLoading ? 'Uploading...' : 'Submit Documents'}
               </Button>
             </div>
           </form>

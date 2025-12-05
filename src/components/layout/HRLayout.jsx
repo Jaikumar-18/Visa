@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Outlet, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -7,7 +8,34 @@ import { useData } from '../../context/DataContext';
 const HRLayout = () => {
   const { id } = useParams();
   const { getEmployee } = useData();
-  const employee = id ? getEmployee(parseInt(id)) : null;
+  const [employee, setEmployee] = useState(null);
+
+  // Load employee data when ID changes
+  useEffect(() => {
+    if (id) {
+      getEmployee(parseInt(id)).then(data => {
+        console.log('HRLayout loaded employee:', data);
+        setEmployee(data);
+      });
+    } else {
+      setEmployee(null);
+    }
+  }, [id, getEmployee]);
+
+  // Reload when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && id) {
+        getEmployee(parseInt(id)).then(data => {
+          console.log('HRLayout reloaded employee:', data);
+          setEmployee(data);
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [id, getEmployee]);
 
   return (
     <div className="flex h-screen overflow-hidden">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FileText, Send, CheckCircle } from 'lucide-react';
 import { useData } from '../../context/DataContext';
@@ -8,69 +8,71 @@ import toast from 'react-hot-toast';
 const VisaApplication = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { getEmployee, updateEmployee, addNotification } = useData();
-  const employee = getEmployee(parseInt(id));
+  const { getEmployee, workflow, addNotification } = useData();
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [processingStage, setProcessingStage] = useState('');
 
-  if (!employee) {
-    return <div>Employee not found</div>;
+  useEffect(() => {
+    const loadEmployee = async () => {
+      try {
+        const data = await getEmployee(parseInt(id));
+        setEmployee(data);
+      } catch (error) {
+        console.error('Failed to load employee:', error);
+        toast.error('Failed to load employee data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadEmployee();
+  }, [id, getEmployee]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleSubmit = () => {
+  if (!employee) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <p className="text-sm text-neutral-900 font-medium">Employee not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     setProcessingStage('Submitting application...');
     
-    // Stage 1: Submission
-    setTimeout(() => {
-      updateEmployee(employee.id, {
-        finalization: {
-          ...employee.finalization,
-          visaApplicationSubmitted: true,
-          visaApplicationSubmittedAt: new Date().toISOString(),
-          visaStatus: 'submitted',
-        },
-      });
-      
-      setProcessingStage('Under review by ICP/GDRFA...');
-      
-      // Stage 2: Under Review
-      setTimeout(() => {
-        updateEmployee(employee.id, {
-          finalization: {
-            ...employee.finalization,
-            visaStatus: 'under-review',
-          },
-        });
-        
-        setProcessingStage('Processing visa stamping...');
-        
-        // Stage 3: Approved
-        setTimeout(() => {
-          updateEmployee(employee.id, {
-            finalization: {
-              ...employee.finalization,
-              visaStatus: 'approved',
-              visaReceived: true,
-              visaReceivedAt: new Date().toISOString(),
-              emiratesIdReceived: true,
-            },
-            currentStage: 'completed',
-          });
+    try {
+      await workflow.applyVisa(employee.id);
 
-          addNotification(
-            employee.id,
-            'Your residence visa and Emirates ID are ready! Please upload the stamped visa page.',
-            'success'
-          );
+      await addNotification(
+        employee.id,
+        'Your residence visa and Emirates ID are ready! Please upload the stamped visa page.',
+        'success'
+      );
 
-          setProcessingStage('');
-          setIsSubmitting(false);
-          toast.success('Visa & Emirates ID Generated! Employee notified to upload stamped visa.');
-          setTimeout(() => navigate('/hr/employees'), 2000);
-        }, 2000);
-      }, 2000);
-    }, 2000);
+      setProcessingStage('');
+      toast.success('Visa & Emirates ID Generated! Employee notified to upload stamped visa.');
+      setTimeout(() => navigate('/hr/employees'), 1500);
+    } catch (error) {
+      console.error('Failed to apply for visa:', error);
+      toast.error(error.response?.data?.message || 'Failed to apply for visa');
+      setProcessingStage('');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -94,19 +96,19 @@ const VisaApplication = () => {
             <div className="grid grid-cols-4 gap-3">
               <div>
                 <p className="text-xs text-neutral-500">Name</p>
-                <p className="text-xs font-medium text-neutral-900">{employee.name}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.first_name} {employee.last_name}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Passport Number</p>
-                <p className="text-xs font-medium text-neutral-900">{employee.passportNumber}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.passport_number}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Nationality</p>
-                <p className="text-xs font-medium text-neutral-900">{employee.nationality}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.present_nationality}</p>
               </div>
               <div>
                 <p className="text-xs text-neutral-500">Visa Type</p>
-                <p className="text-xs font-medium text-neutral-900">{employee.visaType}</p>
+                <p className="text-xs font-medium text-neutral-900">{employee.visa_type}</p>
               </div>
             </div>
           </div>
@@ -177,7 +179,7 @@ const VisaApplication = () => {
             </div>
           )}
 
-          {employee.finalization?.visaReceived && (
+          {employee.visa_received && (
             <div className="bg-white border border-neutral-300 rounded-lg p-4">
               <div className="text-center py-4">
                 <CheckCircle className="mx-auto text-green-600 mb-3" size={40} />
@@ -198,7 +200,7 @@ const VisaApplication = () => {
           <Button type="button" variant="secondary" onClick={() => navigate('/hr/employees')}>
             Back to Employees
           </Button>
-          {!employee.finalization?.visaApplicationSubmitted && !employee.finalization?.visaReceived && (
+          {!employee.visa_received && (
             <Button
               type="button"
               variant="primary"
@@ -209,7 +211,7 @@ const VisaApplication = () => {
               {isSubmitting ? 'Processing...' : 'Submit Visa Application'}
             </Button>
           )}
-          {employee.finalization?.visaReceived && (
+          {employee.visa_received && (
             <Button
               type="button"
               variant="success"
